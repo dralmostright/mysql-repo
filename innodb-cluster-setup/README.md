@@ -22,6 +22,12 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 </tr> </table>
 <hr >
 
+### MySQL InnoDB has three major components:
+
+* MySQL group replication – It is a group of database servers. It replicates the MySQL databases across the multiple nodes, and it has fault tolerance. When changes in the data occur in the MySQL databases, it automatically replicates to the secondary nodes of the server. The concept of the MySQL group replication is similar to the concept of the AlwaysOn availability group
+* MySQL Router – When a failover occurs, the client application must be aware of the PRIMARY instance and cluster topology. This functionality is handled by the MySQL Router. It routes that redirects the data requests to the available MySQL Server instance. MySQL Router acts as a proxy that is used to hide the multiple MySQL database servers. The concept of the MySQL Router is similar to the Virtual network name of the Windows Server failover cluster
+* MySQL Shell – It is a configuration tool that can be used to connect, deploy, and manage the MySQL InnoDB cluster. MySQL Shell contains an Admin API that has a dba global variable. The dba variable is used to deploy and manage the InnoDB cluster
+
 ### InnoDB Cluster Requirements
 
 * InnoDB Cluster uses Group Replication and therefore your server instances must meet the same requirements. AdminAPI provides the dba.checkInstanceConfiguration() method to verify that an instance meets the Group Replication requirements, and the dba.configureInstance() method to configure an instance to meet the requirements.
@@ -53,6 +59,7 @@ Alternatively, we can download from below link too:
 * [MySQL Router RPM](https://dev.mysql.com/downloads/router/)
 
 <hr >
+
 #### Disable Selinux
 Verify the status of Selinux
 
