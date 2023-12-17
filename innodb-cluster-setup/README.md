@@ -7,9 +7,9 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 <tr><td>
 | Parameter | Value |
 | ----------- | ----------- |
-| mysqlvm1.localdomain      | Primary Instance  (R/W) |
-| mysqlvm2.localdomain      | Secondary Instance (R/O) |
-| mysqlvm3.localdomain      | Secondary Instance  (R/O) |
+| mysqlvm1.localdomain| Primary Instance  |
+| mysqlvm2.localdomain| Secondary Instance  |
+| mysqlvm3.localdomain| Secondary Instance  |
 </td>
 <td>
 ![Cluster Architecture](imgs/innodb-cluster.png)
