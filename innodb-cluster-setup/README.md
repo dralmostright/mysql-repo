@@ -31,6 +31,8 @@ The Performance Schema must be enabled on any instance which you want to use wit
 
 * There are others too you can refer more on [MySQL Doc](https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-innodb-cluster-requirements.html)
 
+* SELINUX policies need to be set properly, but its better to disable it
+
 <hr >
 
 #### Softwares Required:
@@ -47,10 +49,41 @@ wget https://dev.mysql.com/get/Downloads/MySQL-Router/mysql-router-community-8.0
 ```
 
 Alternatively, we can download from below link too:
-* [MySQL Communitiy Edition RPM's](https://dev.mysql.com/downloads/router/)
-* [MySQL Router RPM](https://dev.mysql.com/downloads/mysql/)
+* [MySQL Communitiy Edition RPM's](https://dev.mysql.com/downloads/mysql/)
+* [MySQL Router RPM](https://dev.mysql.com/downloads/router/)
 
+#### Disable Selinux
+Verify the status of Selinux
 
+```
+[root@mysqlvm1 ~]# sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Memory protection checking:     actual (secure)
+Max kernel policy version:      31
+[root@mysqlvm1 ~]# cat /etc/sysconfig/selinux | grep -i Selinux | grep -v '#'
+SELINUX=enforcing
+SELINUXTYPE=targeted
+[root@mysqlvm1 ~]#
+```
 
+Open the SELinux configuration file with a text editor.
+```
+[root@mysqlvm1 ~]# vi /etc/sysconfig/selinux
+```
+In the file, set SELINUX to disabled:
+```
+SELINUX=disabled
+```
+Save and exit the file.
 
-
+Reboot the STA server to make your changes take effect.
+```
+[root@mysqlvm1 ~]# reboot
+```
