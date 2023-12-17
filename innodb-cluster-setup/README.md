@@ -21,7 +21,7 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 </td>
 </tr> </table>
 
-###InnoDB Cluster Requirements
+### InnoDB Cluster Requirements
 
 * InnoDB Cluster uses Group Replication and therefore your server instances must meet the same requirements. AdminAPI provides the dba.checkInstanceConfiguration() method to verify that an instance meets the Group Replication requirements, and the dba.configureInstance() method to configure an instance to meet the requirements.
 
