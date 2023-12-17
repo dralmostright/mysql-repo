@@ -119,6 +119,16 @@ SELinux status:                 disabled
 ```
 <hr >
 
+### Disable Firewall on the server:
+We will disable the firewall completely as in most situation we will have external firewall.
+```
+[root@mysqlvm1 ~]# systemctl stop firewalld
+[root@mysqlvm1 ~]# systemctl disable firewalld
+Removed /etc/systemd/system/multi-user.target.wants/firewalld.service.
+Removed /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
+[root@mysqlvm1 ~]#
+```
+
 ### Configure Node reachability 
 By editing and appending last three lines as below in /etc/hosts file the host name can be resolved without needing of dns, if in case you are using dns this is not required. This needs to be done in all three nodes.
 ```
@@ -251,20 +261,20 @@ Update the parameters to the directories created and copy this file in all insta
 ```
 [root@mysqlvm1 ~]# vi /etc/my.cnf
 ```
-
+Verify the changes
 ```
 [root@mysqlvm1 ~]# cat /etc/my.cnf | grep -v '#'
 
 [mysqld]
 
 datadir=/pgdata/mysql/data
-socket=/pgdata/mysql/data/mysql.sock
+socket=/var/lib/mysql/mysql.sock
 log-bin=/walarc/mysql/binlog
+bind-address=0.0.0.0
 log-error=/pgdata/mysql/log/mysqld.log
 pid-file=/var/run/mysqld/mysqld.pid
 [root@mysqlvm1 ~]#
 ```
-
 Copy the update configuration in all nodes:
 ```
 [root@mysqlvm1 ~]# scp /etc/my.cnf mysqlvm2://etc/my.cnf
@@ -537,4 +547,865 @@ Dec 17 19:09:26 mysqlvm1.localdomain systemd[1]: Started MySQL Server.
 [root@mysqlvm1 ~]# systemctl enable mysqld
 Created symlink /etc/systemd/system/multi-user.target.wants/mysqld.service → /usr/lib/systemd/system/mysqld.service.
 [root@mysqlvm1 ~]#
+```
+* Configure MySQL Server instance on mysqlvm2
+```
+[root@mysqlvm2 data]# mysqld --initialize
+[root@mysqlvm2 data]# chown -R mysql:mysql /pgdata/mysql/
+[root@mysqlvm2 data]# chown -R mysql:mysql /walarc/mysql/
+[root@mysqlvm2 data]# systemctl start mysqld
+[root@mysqlvm2 data]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sun 2023-12-17 19:27:17 +0545; 5s ago
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+  Process: 4193 ExecStartPre=/usr/bin/mysqld_pre_systemd (code=exited, status=0/SUCCESS)
+ Main PID: 4228 (mysqld)
+   Status: "Server is operational"
+    Tasks: 38 (limit: 22960)
+   Memory: 429.8M
+   CGroup: /system.slice/mysqld.service
+           └─4228 /usr/sbin/mysqld
+
+Dec 17 19:27:14 mysqlvm2.localdomain systemd[1]: Starting MySQL Server...
+Dec 17 19:27:17 mysqlvm2.localdomain systemd[1]: Started MySQL Server.
+[root@mysqlvm2 data]# systemctl enable mysqld
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqld.service → /usr/lib/systemd/system/mysqld.service.
+[root@mysqlvm2 data]#
+```
+Note the temporary root password.
+```
+[root@mysqlvm2 ~]# tail -5f /pgdata/mysql/log/mysqld.log
+2023-12-17T13:41:16.597596Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.35) initializing of server in progress as process 4126
+2023-12-17T13:41:16.602728Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2023-12-17T13:41:16.852494Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2023-12-17T13:41:17.575635Z 6 [Note] [MY-010454] [Server] A temporary password is generated for root@localhost: oqVW0XeJh(,a
+2023-12-17T13:42:16.957913Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.35) starting as process 4228
+2023-12-17T13:42:16.974809Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2023-12-17T13:42:17.503610Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2023-12-17T13:42:17.845177Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2023-12-17T13:42:17.845225Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2023-12-17T13:42:17.858092Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+```
+* Configure MySQL Server instance on mysqlvm3
+```
+[root@mysqlvm3 ~]# mysqld --initialize
+[root@mysqlvm3 ~]# systemctl start mysqld
+Job for mysqld.service failed because the control process exited with error code.
+See "systemctl status mysqld.service" and "journalctl -xe" for details.
+[root@mysqlvm3 ~]# chown -R mysql:mysql /pgdata/mysql
+[root@mysqlvm3 ~]# chown -R mysql:mysql /walarc/mysql
+[root@mysqlvm3 ~]# systemctl start mysqld
+[root@mysqlvm3 ~]# systectl status mysqld
+bash: systectl: command not found...
+^C
+[root@mysqlvm3 ~]# systemctl start mysqld
+[root@mysqlvm3 ~]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sun 2023-12-17 19:31:36 +0545; 19s ago
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+  Process: 4232 ExecStartPre=/usr/bin/mysqld_pre_systemd (code=exited, status=0/SUCCESS)
+ Main PID: 4260 (mysqld)
+   Status: "Server is operational"
+    Tasks: 38 (limit: 22960)
+   Memory: 405.6M
+   CGroup: /system.slice/mysqld.service
+           └─4260 /usr/sbin/mysqld
+
+Dec 17 19:31:34 mysqlvm3.localdomain systemd[1]: Starting MySQL Server...
+Dec 17 19:31:36 mysqlvm3.localdomain systemd[1]: Started MySQL Server.
+[root@mysqlvm3 ~]# systemctl enable mysqld
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqld.service → /usr/lib/systemd/system/mysqld.service.
+[root@mysqlvm3 ~]#
+```
+
+Note the temporary root password.
+```
+[root@mysqlvm3 ~]# tail -5f /pgdata/mysql/log/mysqld.log
+2023-12-17T13:45:20.522884Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.35) initializing of server in progress as process 4135
+2023-12-17T13:45:20.530486Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2023-12-17T13:45:20.791820Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2023-12-17T13:45:21.525265Z 6 [Note] [MY-010454] [Server] A temporary password is generated for root@localhost: kls_3;!s*Qi!
+2023-12-17T13:46:35.433256Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.35) starting as process 4260
+2023-12-17T13:46:35.439177Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2023-12-17T13:46:36.089039Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2023-12-17T13:46:36.624662Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2023-12-17T13:46:36.624708Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2023-12-17T13:46:36.640527Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.35'  socket: '/pgdata/mysql/data/mysql.sock'  port: 3306  MySQL Community Server - GPL.
+2023-12-17T13:46:36.640637Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+```
+
+### Update root password and create dedicated user for cluster replication.
+* Update and create users on mysqlvm1
+```
+[root@mysqlvm1 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 10
+Server version: 8.0.35
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'admin123';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> exit
+Bye
+[root@mysqlvm1 ~]#
+```
+```
+[root@mysqlvm1 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 11
+Server version: 8.0.35 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'clusteradmin'@'%' identified by 'admin123';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> GRANT ALL privileges on *.* to 'clusteradmin'@'%' with grant option;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> reset master;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>
+```
+
+* Update and create users on mysqlvm2
+```
+[root@mysqlvm2 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.35
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'admin123';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> exit
+Bye
+[root@mysqlvm2 ~]#
+```
+```
+[root@mysqlvm2 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 8.0.35 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'clusteradmin'@'%' identified by 'admin123';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> GRANT ALL privileges on *.* to 'clusteradmin'@'%' with grant option;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> reset master;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>
+```
+
+* Update and create users on mysqlvm3
+```
+[root@mysqlvm3 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.35
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'admin123';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> exit
+Bye
+[root@mysqlvm3 ~]#
+```
+```
+[root@mysqlvm3 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9
+Server version: 8.0.35 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'clusteradmin'@'%' identified by 'admin123';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> GRANT ALL privileges on *.* to 'clusteradmin'@'%' with grant option;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> reset master;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql>
+```
+
+### Verify the connectivity among the nodes
+* mysqlvm1
+```
+[root@mysqlvm1 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm1.localdomain | mysqlvm1.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm1.localdomain | mysqlvm2.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm1.localdomain | mysqlvm3.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+[root@mysqlvm1 ~]#
+```
+* mysqlvm2
+```
+[root@mysqlvm2 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm2.localdomain | mysqlvm1.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm2.localdomain | mysqlvm2.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm2.localdomain | mysqlvm3.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+[root@mysqlvm2 ~]#
+```
+* mysqlvm3
+```
+[root@mysqlvm3 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm3.localdomain | mysqlvm1.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm3.localdomain | mysqlvm2.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+mysql: [Warning] Using a password on the command line interface can be insecure.
++-----------------------------------+----------------------+-------------+-------------------+
+| user()                            | @@hostname           | @@read_only | @@super_read_only |
++-----------------------------------+----------------------+-------------+-------------------+
+| clusteradmin@mysqlvm3.localdomain | mysqlvm3.localdomain |           0 |                 0 |
++-----------------------------------+----------------------+-------------+-------------------+
+
+[root@mysqlvm3 ~]#
+```
+
+### Configure the cluster
+Login to any instance using the clusteradmin user, we are connecting to mysqlvm1
+```
+[root@mysqlvm1 ~]# mysqlsh -uclusteradmin -padmin123
+MySQL Shell 8.0.35
+
+Copyright (c) 2016, 2023, Oracle and/or its affiliates.
+Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+Other names may be trademarks of their respective owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+WARNING: Using a password on the command line interface can be insecure.
+Creating a session to 'clusteradmin@localhost'
+Fetching schema names for auto-completion... Press ^C to stop.
+Your MySQL connection id is 15 (X protocol)
+Server version: 8.0.35 MySQL Community Server - GPL
+No default schema selected; type \use <schema> to set one.
+```
+```
+ MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm1:3306")
+Please provide the password for 'clusteradmin@mysqlvm1:3306': ********
+Save password for 'clusteradmin@mysqlvm1:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Validating local MySQL instance listening at port 3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm1.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+Checking whether existing tables comply with Group Replication requirements...
+No incompatible tables detected
+
+Checking instance configuration...
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+NOTE: Please use the dba.configureInstance() command to repair these issues.
+
+{
+    "config_errors": [
+        {
+            "action": "server_update",
+            "current": "COMMIT_ORDER",
+            "option": "binlog_transaction_dependency_tracking",
+            "required": "WRITESET"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "enforce_gtid_consistency",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "gtid_mode",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "1",
+            "option": "server_id",
+            "required": "<unique ID>"
+        }
+    ],
+    "status": "error"
+}
+ MySQL  localhost:33060+ ssl  JS >
+```
+
+```
+ MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm2:3306")
+Please provide the password for 'clusteradmin@mysqlvm2:3306': ********
+Save password for 'clusteradmin@mysqlvm2:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Validating MySQL instance at mysqlvm2.localdomain:3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm2.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+Checking whether existing tables comply with Group Replication requirements...
+No incompatible tables detected
+
+Checking instance configuration...
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+NOTE: Please use the dba.configureInstance() command to repair these issues.
+
+{
+    "config_errors": [
+        {
+            "action": "server_update",
+            "current": "COMMIT_ORDER",
+            "option": "binlog_transaction_dependency_tracking",
+            "required": "WRITESET"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "enforce_gtid_consistency",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "gtid_mode",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "1",
+            "option": "server_id",
+            "required": "<unique ID>"
+        }
+    ],
+    "status": "error"
+}
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm3:3306")
+Please provide the password for 'clusteradmin@mysqlvm3:3306': ********
+Save password for 'clusteradmin@mysqlvm3:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Validating MySQL instance at mysqlvm3.localdomain:3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm3.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+Checking whether existing tables comply with Group Replication requirements...
+No incompatible tables detected
+
+Checking instance configuration...
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+NOTE: Please use the dba.configureInstance() command to repair these issues.
+
+{
+    "config_errors": [
+        {
+            "action": "server_update",
+            "current": "COMMIT_ORDER",
+            "option": "binlog_transaction_dependency_tracking",
+            "required": "WRITESET"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "enforce_gtid_consistency",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "OFF",
+            "option": "gtid_mode",
+            "required": "ON"
+        },
+        {
+            "action": "server_update+restart",
+            "current": "1",
+            "option": "server_id",
+            "required": "<unique ID>"
+        }
+    ],
+    "status": "error"
+}
+ MySQL  localhost:33060+ ssl  JS >
+```
+
+```
+ MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm1:3306")
+Please provide the password for 'clusteradmin@mysqlvm1:3306': ********
+Save password for 'clusteradmin@mysqlvm1:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Configuring local MySQL instance listening at port 3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm1.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+applierWorkerThreads will be set to the default value of 4.
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+Do you want to perform the required configuration changes? [y/n]: y
+Do you want to restart the instance after configuring it? [y/n]: y
+Configuring instance...
+
+WARNING: '@@binlog_transaction_dependency_tracking' is deprecated and will be removed in a future release. (Code 1287).
+The instance 'mysqlvm1.localdomain:3306' was configured to be used in an InnoDB cluster.
+Restarting MySQL...
+NOTE: MySQL server at mysqlvm1.localdomain:3306 was restarted.
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm2:3306")
+Please provide the password for 'clusteradmin@mysqlvm2:3306': ********
+Save password for 'clusteradmin@mysqlvm2:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Configuring MySQL instance at mysqlvm2.localdomain:3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm2.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+applierWorkerThreads will be set to the default value of 4.
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+Do you want to perform the required configuration changes? [y/n]: y
+Do you want to restart the instance after configuring it? [y/n]: y
+Configuring instance...
+
+WARNING: '@@binlog_transaction_dependency_tracking' is deprecated and will be removed in a future release. (Code 1287).
+The instance 'mysqlvm2.localdomain:3306' was configured to be used in an InnoDB cluster.
+Restarting MySQL...
+NOTE: MySQL server at mysqlvm2.localdomain:3306 was restarted.
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm3:3306")
+Please provide the password for 'clusteradmin@mysqlvm3:3306': ********
+Save password for 'clusteradmin@mysqlvm3:3306'? [Y]es/[N]o/Ne[v]er (default No):
+Configuring MySQL instance at mysqlvm3.localdomain:3306 for use in an InnoDB cluster...
+
+This instance reports its own address as mysqlvm3.localdomain:3306
+Clients and other cluster members will communicate with it through this address by default. If this is not correct, the report_host MySQL system variable should be changed.
+
+applierWorkerThreads will be set to the default value of 4.
+
+NOTE: Some configuration options need to be fixed:
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| Variable                               | Current Value | Required Value | Note                                             |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+| binlog_transaction_dependency_tracking | COMMIT_ORDER  | WRITESET       | Update the server variable                       |
+| enforce_gtid_consistency               | OFF           | ON             | Update read-only variable and restart the server |
+| gtid_mode                              | OFF           | ON             | Update read-only variable and restart the server |
+| server_id                              | 1             | <unique ID>    | Update read-only variable and restart the server |
++----------------------------------------+---------------+----------------+--------------------------------------------------+
+
+Some variables need to be changed, but cannot be done dynamically on the server.
+Do you want to perform the required configuration changes? [y/n]: y
+Do you want to restart the instance after configuring it? [y/n]: y
+Configuring instance...
+
+WARNING: '@@binlog_transaction_dependency_tracking' is deprecated and will be removed in a future release. (Code 1287).
+The instance 'mysqlvm3.localdomain:3306' was configured to be used in an InnoDB cluster.
+Restarting MySQL...
+NOTE: MySQL server at mysqlvm3.localdomain:3306 was restarted.
+ MySQL  localhost:33060+ ssl  JS >
+```
+
+```
+ MySQL  localhost:33060+ ssl  JS > var cls = dba.createCluster("mysqlclus")
+Dba.createCluster: MySQL server has gone away (MYSQLSH 2006)
+The global session got disconnected..
+Attempting to reconnect to 'mysqlx://clusteradmin@localhost:33060'..
+The global session was successfully reconnected.
+ MySQL  localhost:33060+ ssl  JS > var cls = dba.createCluster("mysqlclus")
+A new InnoDB Cluster will be created on instance 'mysqlvm1.localdomain:3306'.
+
+Validating instance configuration at localhost:3306...
+
+This instance reports its own address as mysqlvm1.localdomain:3306
+
+Instance configuration is suitable.
+NOTE: Group Replication will communicate with other members using 'mysqlvm1.localdomain:3306'. Use the localAddress option to override.
+
+* Checking connectivity and SSL configuration...
+
+Creating InnoDB Cluster 'mysqlclus' on 'mysqlvm1.localdomain:3306'...
+
+Adding Seed Instance...
+Cluster successfully created. Use Cluster.addInstance() to add MySQL instances.
+At least 3 instances are needed for the cluster to be able to withstand up to
+one server failure.
+```
+```
+ MySQL  localhost:33060+ ssl  JS >  cls.status()
+{
+    "clusterName": "mysqlclus",
+    "defaultReplicaSet": {
+        "name": "default",
+        "primary": "mysqlvm1.localdomain:3306",
+        "ssl": "REQUIRED",
+        "status": "OK_NO_TOLERANCE",
+        "statusText": "Cluster is NOT tolerant to any failures.",
+        "topology": {
+            "mysqlvm1.localdomain:3306": {
+                "address": "mysqlvm1.localdomain:3306",
+                "memberRole": "PRIMARY",
+                "mode": "R/W",
+                "readReplicas": {},
+                "replicationLag": "applier_queue_applied",
+                "role": "HA",
+                "status": "ONLINE",
+                "version": "8.0.35"
+            }
+        },
+        "topologyMode": "Single-Primary"
+    },
+    "groupInformationSourceMember": "mysqlvm1.localdomain:3306"
+}
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > cls.addInstance("clusteradmin@mysqlvm2:3306")
+
+NOTE: The target instance 'mysqlvm2.localdomain:3306' has not been pre-provisioned (GTID set is empty). The Shell is unable to decide whether incremental state recovery can correctly provision it.
+The safest and most convenient way to provision a new instance is through automatic clone provisioning, which will completely overwrite the state of 'mysqlvm2.localdomain:3306' with a physical snapshot from an existing cluster member. To use this method by default, set the 'recoveryMethod' option to 'clone'.
+
+The incremental state recovery may be safely used if you are sure all updates ever executed in the cluster were done with GTIDs enabled, there are no purged transactions and the new instance contains the same GTID set as the cluster or a subset of it. To use this method by default, set the 'recoveryMethod' option to 'incremental'.
+
+
+Please select a recovery method [C]lone/[I]ncremental recovery/[A]bort (default Clone): C
+Validating instance configuration at mysqlvm2:3306...
+
+This instance reports its own address as mysqlvm2.localdomain:3306
+
+Instance configuration is suitable.
+NOTE: Group Replication will communicate with other members using 'mysqlvm2.localdomain:3306'. Use the localAddress option to override.
+
+* Checking connectivity and SSL configuration...
+A new instance will be added to the InnoDB Cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Adding instance to the cluster...
+
+Monitoring recovery process of the new cluster member. Press ^C to stop monitoring and let it continue in background.
+Clone based state recovery is now in progress.
+
+NOTE: A server restart is expected to happen as part of the clone process. If the
+server does not support the RESTART command or does not come back after a
+while, you may need to manually start it back.
+
+* Waiting for clone to finish...
+NOTE: mysqlvm2.localdomain:3306 is being cloned from mysqlvm1.localdomain:3306
+** Stage DROP DATA: Completed
+** Clone Transfer
+    FILE COPY  ############################################################  100%  Completed
+    PAGE COPY  ############################################################  100%  Completed
+    REDO COPY  ############################################################  100%  Completed
+
+NOTE: mysqlvm2.localdomain:3306 is shutting down...
+
+* Waiting for server restart... ready
+* mysqlvm2.localdomain:3306 has restarted, waiting for clone to finish...
+** Stage RESTART: Completed
+* Clone process has finished: 76.82 MB transferred in about 1 second (~76.82 MB/s)
+
+State recovery already finished for 'mysqlvm2.localdomain:3306'
+
+The instance 'mysqlvm2.localdomain:3306' was successfully added to the cluster.
+
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > cls.addInstance("clusteradmin@mysqlvm3:3306")
+
+NOTE: The target instance 'mysqlvm3.localdomain:3306' has not been pre-provisioned (GTID set is empty). The Shell is unable to decide whether incremental state recovery can correctly provision it.
+The safest and most convenient way to provision a new instance is through automatic clone provisioning, which will completely overwrite the state of 'mysqlvm3.localdomain:3306' with a physical snapshot from an existing cluster member. To use this method by default, set the 'recoveryMethod' option to 'clone'.
+
+The incremental state recovery may be safely used if you are sure all updates ever executed in the cluster were done with GTIDs enabled, there are no purged transactions and the new instance contains the same GTID set as the cluster or a subset of it. To use this method by default, set the 'recoveryMethod' option to 'incremental'.
+
+
+Please select a recovery method [C]lone/[I]ncremental recovery/[A]bort (default Clone): C
+Validating instance configuration at mysqlvm3:3306...
+
+This instance reports its own address as mysqlvm3.localdomain:3306
+
+Instance configuration is suitable.
+NOTE: Group Replication will communicate with other members using 'mysqlvm3.localdomain:3306'. Use the localAddress option to override.
+
+* Checking connectivity and SSL configuration...
+A new instance will be added to the InnoDB Cluster. Depending on the amount of
+data on the cluster this might take from a few seconds to several hours.
+
+Adding instance to the cluster...
+
+Monitoring recovery process of the new cluster member. Press ^C to stop monitoring and let it continue in background.
+Clone based state recovery is now in progress.
+
+NOTE: A server restart is expected to happen as part of the clone process. If the
+server does not support the RESTART command or does not come back after a
+while, you may need to manually start it back.
+
+* Waiting for clone to finish...
+NOTE: mysqlvm3.localdomain:3306 is being cloned from mysqlvm2.localdomain:3306
+** Stage DROP DATA: Completed
+** Clone Transfer
+    FILE COPY  ############################################################  100%  Completed
+    PAGE COPY  ############################################################  100%  Completed
+    REDO COPY  ############################################################  100%  Completed
+
+NOTE: mysqlvm3.localdomain:3306 is shutting down...
+
+* Waiting for server restart... ready
+* mysqlvm3.localdomain:3306 has restarted, waiting for clone to finish...
+** Stage RESTART: Completed
+* Clone process has finished: 76.80 MB transferred in about 1 second (~76.80 MB/s)
+
+State recovery already finished for 'mysqlvm3.localdomain:3306'
+
+The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
+
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > cls.status()
+{
+    "clusterName": "mysqlclus",
+    "defaultReplicaSet": {
+        "name": "default",
+        "primary": "mysqlvm1.localdomain:3306",
+        "ssl": "REQUIRED",
+        "status": "OK",
+        "statusText": "Cluster is ONLINE and can tolerate up to ONE failure.",
+        "topology": {
+            "mysqlvm1.localdomain:3306": {
+                "address": "mysqlvm1.localdomain:3306",
+                "memberRole": "PRIMARY",
+                "mode": "R/W",
+                "readReplicas": {},
+                "replicationLag": "applier_queue_applied",
+                "role": "HA",
+                "status": "ONLINE",
+                "version": "8.0.35"
+            },
+            "mysqlvm2.localdomain:3306": {
+                "address": "mysqlvm2.localdomain:3306",
+                "memberRole": "SECONDARY",
+                "mode": "R/O",
+                "readReplicas": {},
+                "replicationLag": "applier_queue_applied",
+                "role": "HA",
+                "status": "ONLINE",
+                "version": "8.0.35"
+            },
+            "mysqlvm3.localdomain:3306": {
+                "address": "mysqlvm3.localdomain:3306",
+                "memberRole": "SECONDARY",
+                "mode": "R/O",
+                "readReplicas": {},
+                "replicationLag": "applier_queue_applied",
+                "role": "HA",
+                "status": "ONLINE",
+                "version": "8.0.35"
+            }
+        },
+        "topologyMode": "Single-Primary"
+    },
+    "groupInformationSourceMember": "mysqlvm1.localdomain:3306"
+}
+ MySQL  localhost:33060+ ssl  JS >
+```
+```
+ MySQL  localhost:33060+ ssl  JS > cls.describe()
+{
+    "clusterName": "mysqlclus",
+    "defaultReplicaSet": {
+        "name": "default",
+        "topology": [
+            {
+                "address": "mysqlvm1.localdomain:3306",
+                "label": "mysqlvm1.localdomain:3306",
+                "role": "HA"
+            },
+            {
+                "address": "mysqlvm2.localdomain:3306",
+                "label": "mysqlvm2.localdomain:3306",
+                "role": "HA"
+            },
+            {
+                "address": "mysqlvm3.localdomain:3306",
+                "label": "mysqlvm3.localdomain:3306",
+                "role": "HA"
+            }
+        ],
+        "topologyMode": "Single-Primary"
+    }
+}
+ MySQL  localhost:33060+ ssl  JS >
 ```
