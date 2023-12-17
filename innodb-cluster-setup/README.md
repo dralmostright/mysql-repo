@@ -21,8 +21,12 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 </td>
 </tr> </table>
 
+###InnoDB Cluster Requirements
 
-<img src="imgs/innodb-cluster.png" alt="Cluster Architecture" style="display: block; margin-left: auto; margin-right: auto;">  
+* InnoDB Cluster uses Group Replication and therefore your server instances must meet the same requirements. AdminAPI provides the dba.checkInstanceConfiguration() method to verify that an instance meets the Group Replication requirements, and the dba.configureInstance() method to configure an instance to meet the requirements.
 
-	
-Operating System and MySQL Server version
+* Data for use with InnoDB Cluster, must be stored in the InnoDB transactional storage engine. 
+The Performance Schema must be enabled on any instance which you want to use with InnoDB Cluster.
+
+* There are others too you can refer more on [MySQL Doc](https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-innodb-cluster-requirements.html)
+
