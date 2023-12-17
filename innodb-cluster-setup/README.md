@@ -501,6 +501,7 @@ Complete!
    Active: inactive (dead)
 [root@mysqlvm1 ~]#
 ```
+<hr >
 
 ### Configure/Initialize MySQL Server Instance
 After all parameters are set now initialize the mysql database, which creates all metadata and other necessary configurations. This needs to be done on all mysql server instances.
@@ -637,6 +638,7 @@ Note the temporary root password.
 2023-12-17T13:46:36.640527Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.35'  socket: '/pgdata/mysql/data/mysql.sock'  port: 3306  MySQL Community Server - GPL.
 2023-12-17T13:46:36.640637Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
 ```
+<hr >
 
 ### Update root password and create dedicated user for cluster replication.
 * Update and create users on mysqlvm1
@@ -806,9 +808,10 @@ Query OK, 0 rows affected (0.01 sec)
 
 mysql>
 ```
+<hr >
 
 ### Verify the connectivity among the nodes
-* mysqlvm1
+* from mysqlvm1 to other
 ```
 [root@mysqlvm1 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
 mysql: [Warning] Using a password on the command line interface can be insecure.
@@ -834,7 +837,7 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 
 [root@mysqlvm1 ~]#
 ```
-* mysqlvm2
+* from mysqlvm2 to other
 ```
 [root@mysqlvm2 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
 mysql: [Warning] Using a password on the command line interface can be insecure.
@@ -860,7 +863,7 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 
 [root@mysqlvm2 ~]#
 ```
-* mysqlvm3
+* from mysqlvm3 to other
 ```
 [root@mysqlvm3 ~]# for i in 1 2 3; do mysql -uclusteradmin -padmin123 -hmysqlvm$i -P3306 -e 'select user(), @@hostname, @@read_only, @@super_read_only'; echo " "; done
 mysql: [Warning] Using a password on the command line interface can be insecure.
@@ -887,8 +890,9 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 [root@mysqlvm3 ~]#
 ```
 
+<hr >
 ### Configure the cluster
-Login to any instance using the clusteradmin user, we are connecting to mysqlvm1
+Login to any instance using the clusteradmin user using the MySQL Shell ,we are connecting to mysqlvm1
 ```
 [root@mysqlvm1 ~]# mysqlsh -uclusteradmin -padmin123
 MySQL Shell 8.0.35
@@ -905,6 +909,12 @@ Your MySQL connection id is 15 (X protocol)
 Server version: 8.0.35 MySQL Community Server - GPL
 No default schema selected; type \use <schema> to set one.
 ```
+The argument to checkInstanceConfiguration() is the connection data to a MySQL Server instance. The connection data may be specified in the following formats:
+* A URI string
+* A dictionary with the connection options
+We'll use the URI string for this example.
+
+* Check configuration for mysqlvm1 instance
 ```
  MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm1:3306")
 Please provide the password for 'clusteradmin@mysqlvm1:3306': ********
@@ -963,6 +973,9 @@ NOTE: Please use the dba.configureInstance() command to repair these issues.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
+The command reports that the instance is not ready for InnoDB cluster usage since some settings are not valid and at this stage its ok to proceed we will later let Admin API to fix it as this is our new configuration.
+
+* Check configuration for mysqlvm2 instance
 
 ```
  MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm2:3306")
@@ -1022,6 +1035,8 @@ NOTE: Please use the dba.configureInstance() command to repair these issues.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
+
+* Check configuration for mysqlvm3 instance
 ```
  MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm3:3306")
 Please provide the password for 'clusteradmin@mysqlvm3:3306': ********
@@ -1080,6 +1095,9 @@ NOTE: Please use the dba.configureInstance() command to repair these issues.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
+The AdminAPI provides a command to automatically and remotely configure an instance for InnoDB cluster usage: dba.configureInstance(). So the next step is to use dba.configureInstance() on each target instance.
+
+* dba.configureInstance() on mysqlvm1
 
 ```
  MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm1:3306")
@@ -1113,6 +1131,8 @@ Restarting MySQL...
 NOTE: MySQL server at mysqlvm1.localdomain:3306 was restarted.
  MySQL  localhost:33060+ ssl  JS >
 ```
+
+* dba.configureInstance() on mysqlvm2
 ```
  MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm2:3306")
 Please provide the password for 'clusteradmin@mysqlvm2:3306': ********
@@ -1145,6 +1165,8 @@ Restarting MySQL...
 NOTE: MySQL server at mysqlvm2.localdomain:3306 was restarted.
  MySQL  localhost:33060+ ssl  JS >
 ```
+
+* dba.configureInstance() on mysqlvm3
 ```
  MySQL  localhost:33060+ ssl  JS > dba.configureInstance("clusteradmin@mysqlvm3:3306")
 Please provide the password for 'clusteradmin@mysqlvm3:3306': ********
@@ -1177,7 +1199,12 @@ Restarting MySQL...
 NOTE: MySQL server at mysqlvm3.localdomain:3306 was restarted.
  MySQL  localhost:33060+ ssl  JS >
 ```
+With this all the instances is now ready to be used in an InnoDB cluster!
+<hr >
 
+### Initializing the InnoDB Cluster
+
+Next, we connect the Shell to one of the instances we just configured, which will be the seed instance. The seed instance is the one that would hold the initial state of the database, which will be replicated to the other instances as they’re added to the cluster. Seed instance we choose is mysqlvm1
 ```
  MySQL  localhost:33060+ ssl  JS > var cls = dba.createCluster("mysqlclus")
 Dba.createCluster: MySQL server has gone away (MYSQLSH 2006)
@@ -1203,6 +1230,8 @@ Cluster successfully created. Use Cluster.addInstance() to add MySQL instances.
 At least 3 instances are needed for the cluster to be able to withstand up to
 one server failure.
 ```
+
+Verify the status of the cluster which we just initialized
 ```
  MySQL  localhost:33060+ ssl  JS >  cls.status()
 {
@@ -1231,6 +1260,13 @@ one server failure.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
+<hr >
+
+### Add Instances to InnoDB Cluster
+
+Now, you need to add replicas to the InnoDB cluster. Often, when a new instance is added to a replica set in a cluster, they will be behind the rest of the ONLINE members and need to catch up to the current state of the seed instance. If the amount of pre-existing data in the seed instance is very large, you may want to clone it or copy that data through a fast method beforehand. Otherwise, Group Replication will perform a sync automatically (this step is called recovery), re-executing all transactions from the seed, as long as they’re in the MySQL binary log. Since the seed instance in this example has little to no data (ie. just the metadata schema and internal accounts) and have binary logging enabled from the beginning, there’s very little that new replicas need to catch up with. Any transactions that were executed in the seed instance will be re-executed in each added replica.
+
+* Add mysqlvm2 
 ```
  MySQL  localhost:33060+ ssl  JS > cls.addInstance("clusteradmin@mysqlvm2:3306")
 
@@ -1282,6 +1318,8 @@ The instance 'mysqlvm2.localdomain:3306' was successfully added to the cluster.
 
  MySQL  localhost:33060+ ssl  JS >
 ```
+
+* Add mysqlvm23
 ```
  MySQL  localhost:33060+ ssl  JS > cls.addInstance("clusteradmin@mysqlvm3:3306")
 
@@ -1333,6 +1371,7 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
 
  MySQL  localhost:33060+ ssl  JS >
 ```
+### Verify the cluster 
 ```
  MySQL  localhost:33060+ ssl  JS > cls.status()
 {
