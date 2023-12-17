@@ -11,9 +11,6 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 | mysqlvm2.localdomain| Secondary Instance  |
 | mysqlvm3.localdomain| Secondary Instance  |
 </td>
-<td>
-![Cluster Architecture](imgs/innodb-cluster.png)
-</td>
 </tr> </table>
 
 <img src="imgs/innodb-cluster.png" alt="Cluster Architecture" height="400" style="display: block; margin-left: auto; margin-right: auto;">  
