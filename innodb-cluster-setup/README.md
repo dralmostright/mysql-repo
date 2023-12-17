@@ -6,12 +6,12 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 <tr><th>Host Details </th><th>Cluster Architecture</th></tr>
 <tr><td>
 
-| Servers | Value |
-| ----------- | ----------- |
-| mysqlvm1.localdomain| Primary Instance (R/W) |
-| mysqlvm2.localdomain| Secondary Instance (R/O) |
-| mysqlvm3.localdomain| Secondary Instance  (R/O)|
-| mysqlvm1.localdomain| MySQL Router Instance|
+| HostName | Instance Type | Operating System and MySQL Server version |
+| ----------- | ----------- | -----------------|
+| mysqlvm1.localdomain| Primary Instance (R/W) | Oracle Linux 8.4, MySQL 8.27 |
+| mysqlvm2.localdomain| Secondary Instance (R/O) | Oracle Linux 8.4, MySQL 8.27 |
+| mysqlvm3.localdomain| Secondary Instance  (R/O)| Oracle Linux 8.4, MySQL 8.27 |
+| mysqlvm1.localdomain| MySQL Router Instance| Oracle Linux 8.4 |
 
 </td>
 <td>
@@ -24,3 +24,5 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 
 <img src="imgs/innodb-cluster.png" alt="Cluster Architecture" height="400" style="display: block; margin-left: auto; margin-right: auto;">  
 
+	
+Operating System and MySQL Server version
