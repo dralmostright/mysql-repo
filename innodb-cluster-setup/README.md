@@ -52,6 +52,7 @@ Alternatively, we can download from below link too:
 * [MySQL Communitiy Edition RPM's](https://dev.mysql.com/downloads/mysql/)
 * [MySQL Router RPM](https://dev.mysql.com/downloads/router/)
 
+<hr >
 #### Disable Selinux
 Verify the status of Selinux
 
@@ -83,7 +84,14 @@ SELINUX=disabled
 ```
 Save and exit the file.
 
-Reboot the STA server to make your changes take effect.
+Reboot the server to make your changes take effect and you need to do this in all servers.
 ```
 [root@mysqlvm1 ~]# reboot
 ```
+Once the server is up verify the status:
+```
+[root@mysqlvm1 ~]# sestatus
+SELinux status:                 disabled
+[root@mysqlvm1 ~]#
+```
+<hr >
