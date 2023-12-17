@@ -1378,7 +1378,9 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
 ```
 ### Verify the cluster 
 ```
- MySQL  localhost:33060+ ssl  JS > cls.status()
+ MySQL  localhost:33060+ ssl  JS > cluster = dba.getCluster();
+<Cluster:mysqlclus>
+ MySQL  localhost:33060+ ssl  JS > cluster.status()
 {
     "clusterName": "mysqlclus",
     "defaultReplicaSet": {
@@ -1424,6 +1426,7 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
     "groupInformationSourceMember": "mysqlvm1.localdomain:3306"
 }
  MySQL  localhost:33060+ ssl  JS >
+
 ```
 ```
  MySQL  localhost:33060+ ssl  JS > cls.describe()
