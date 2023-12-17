@@ -9,6 +9,6 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 | mysqlvm2.localdomain      | Secondary Instance (R/O)     |
 | mysqlvm3.localdomain      | Secondary Instance  (R/O)     |
 
-<img src="smiley.gif" alt="Cluster Architecture" height="300">
+<img src="imgs/innodb-cluster.png" alt="Cluster Architecture" height="300">
 
 ![Cluster Architecture](imgs/innodb-cluster.png)
