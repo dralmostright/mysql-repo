@@ -20,6 +20,7 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 
 </td>
 </tr> </table>
+<hr >
 
 ### InnoDB Cluster Requirements
 
@@ -30,8 +31,10 @@ The Performance Schema must be enabled on any instance which you want to use wit
 
 * There are others too you can refer more on [MySQL Doc](https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-innodb-cluster-requirements.html)
 
-Softwares Required:
-We will be installing the below rpms
+<hr >
+
+#### Softwares Required:
+We will be installing the below rpms and we will download them using wget
 ```
 wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-server-8.0.35-1.el8.x86_64.rpm
 wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-client-8.0.35-1.el8.x86_64.rpm
