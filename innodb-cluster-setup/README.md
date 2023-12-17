@@ -891,8 +891,11 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 ```
 
 <hr >
+
 ### Configure the cluster
-Login to any instance using the clusteradmin user using the MySQL Shell ,we are connecting to mysqlvm1
+
+Login to any instance using the clusteradmin user using the MySQL Shell,we are connecting to mysqlvm1.
+
 ```
 [root@mysqlvm1 ~]# mysqlsh -uclusteradmin -padmin123
 MySQL Shell 8.0.35
@@ -901,7 +904,7 @@ Copyright (c) 2016, 2023, Oracle and/or its affiliates.
 Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
 Other names may be trademarks of their respective owners.
 
-Type '/\help' or '/\?' for help; '/\quit' to exit.
+Type '\help' or '\?' for help; '\quit' to exit.
 WARNING: Using a password on the command line interface can be insecure.
 Creating a session to 'clusteradmin@localhost'
 Fetching schema names for auto-completion... Press ^C to stop.
@@ -909,12 +912,14 @@ Your MySQL connection id is 15 (X protocol)
 Server version: 8.0.35 MySQL Community Server - GPL
 No default schema selected; type /\use <schema> to set one.
 ```
+
 The argument to checkInstanceConfiguration() is the connection data to a MySQL Server instance. The connection data may be specified in the following formats:
 * A URI string
 * A dictionary with the connection options
 We'll use the URI string for this example.
 
 * Check configuration for mysqlvm1 instance
+
 ```
  MySQL  localhost:33060+ ssl  JS > dba.checkInstanceConfiguration("clusteradmin@mysqlvm1:3306")
 Please provide the password for 'clusteradmin@mysqlvm1:3306': ********
