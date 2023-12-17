@@ -119,7 +119,99 @@ SELinux status:                 disabled
 ```
 <hr >
 
-### Install the MySQL RPM's and its suppliment packages
+### Configure Node reachability 
+By editing and appending last three lines as below in /etc/hosts file the host name can be resolved without needing of dns, if in case you are using dns this is not required. This needs to be done in all three nodes.
+```
+[root@mysqlvm1 ~]# vi /etc/hosts
+[root@mysqlvm1 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+192.168.229.139 mysqlvm1.localdomain mysqlvm1
+192.168.229.135 mysqlvm2.localdomain mysqlvm2
+192.168.229.136 mysqlvm3.localdomain mysqlvm3
+[root@mysqlvm1 ~]#
+```
+<hr >
+
+Test node reachability
+* From mysqlvm1
+[root@mysqlvm1 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
+PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
+64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=0.042 ms
+
+--- mysqlvm1.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.042/0.042/0.042/0.000 ms
+
+PING mysqlvm2.localdomain (192.168.229.135) 56(84) bytes of data.
+64 bytes from mysqlvm2.localdomain (192.168.229.135): icmp_seq=1 ttl=64 time=0.754 ms
+
+--- mysqlvm2.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.754/0.754/0.754/0.000 ms
+
+PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
+64 bytes from mysqlvm3.localdomain (192.168.229.136): icmp_seq=1 ttl=64 time=0.842 ms
+
+--- mysqlvm3.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.842/0.842/0.842/0.000 ms
+
+[root@mysqlvm1 ~]#
+
+* From mysqlvm2
+[root@mysqlvm2 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
+PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
+64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=1.99 ms
+
+--- mysqlvm1.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.986/1.986/1.986/0.000 ms
+
+PING mysqlvm2.localdomain (192.168.229.135) 56(84) bytes of data.
+64 bytes from mysqlvm2.localdomain (192.168.229.135): icmp_seq=1 ttl=64 time=0.043 ms
+
+--- mysqlvm2.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.043/0.043/0.043/0.000 ms
+
+PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
+64 bytes from mysqlvm3.localdomain (192.168.229.136): icmp_seq=1 ttl=64 time=1.17 ms
+
+--- mysqlvm3.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.168/1.168/1.168/0.000 ms
+
+[root@mysqlvm2 ~]#
+
+* From mysqlvm3
+[root@mysqlvm3 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
+PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
+64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=1.05 ms
+
+--- mysqlvm1.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.046/1.046/1.046/0.000 ms
+
+PING mysqlvm2.localdomain (192.168.229.135) 56(84) bytes of data.
+64 bytes from mysqlvm2.localdomain (192.168.229.135): icmp_seq=1 ttl=64 time=0.920 ms
+
+--- mysqlvm2.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.920/0.920/0.920/0.000 ms
+
+PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
+64 bytes from mysqlvm3.localdomain (192.168.229.136): icmp_seq=1 ttl=64 time=0.043 ms
+
+--- mysqlvm3.localdomain ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.043/0.043/0.043/0.000 ms
+
+[root@mysqlvm3 ~]#
+
+
+### Install the MySQL RPM's and its suppliment packages in each server
 ```
 [root@mysqlvm1 ~]# yum install mysql-community-client-8.0.35-1.el8.x86_64.rpm \
 > mysql-community-client-plugins-8.0.35-1.el8.x86_64.rpm \
@@ -319,3 +411,16 @@ Complete!
 [root@mysqlvm1 ~]#
 ```
 
+```
+[root@mysqlvm1 ~]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; enabled; vendor preset: disabled)
+   Active: inactive (dead)
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+[root@mysqlvm1 ~]# systemctl status mysqlrouter
+● mysqlrouter.service - MySQL Router
+   Loaded: loaded (/usr/lib/systemd/system/mysqlrouter.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)
+[root@mysqlvm1 ~]#
+```
