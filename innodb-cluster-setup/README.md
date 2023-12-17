@@ -901,13 +901,13 @@ Copyright (c) 2016, 2023, Oracle and/or its affiliates.
 Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
 Other names may be trademarks of their respective owners.
 
-Type '\help' or '\?' for help; '\quit' to exit.
+Type '/\help' or '/\?' for help; '/\quit' to exit.
 WARNING: Using a password on the command line interface can be insecure.
 Creating a session to 'clusteradmin@localhost'
 Fetching schema names for auto-completion... Press ^C to stop.
 Your MySQL connection id is 15 (X protocol)
 Server version: 8.0.35 MySQL Community Server - GPL
-No default schema selected; type \use <schema> to set one.
+No default schema selected; type /\use <schema> to set one.
 ```
 The argument to checkInstanceConfiguration() is the connection data to a MySQL Server instance. The connection data may be specified in the following formats:
 * A URI string
