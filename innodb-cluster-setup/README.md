@@ -5,15 +5,16 @@ MySQL being lightweight and easy to use has become one of the most popular datab
 <table>
 <tr><th>Host Details </th><th>Cluster Architecture</th></tr>
 <tr><td>
-| Parameter      | Value |
+| Parameter | Value |
 | ----------- | ----------- |
-| mysqlvm1.localdomain      | Primary Instance  (R/W)     |
-| mysqlvm2.localdomain      | Secondary Instance (R/O)     |
-| mysqlvm3.localdomain      | Secondary Instance  (R/O)     |
-</td><td>
-<img src="imgs/innodb-cluster.png" alt="Cluster Architecture" height="400" style="display: block; margin-left: auto; margin-right: auto;">  
-</td></tr> </table>
-
-
-
+| mysqlvm1.localdomain      | Primary Instance  (R/W) |
+| mysqlvm2.localdomain      | Secondary Instance (R/O) |
+| mysqlvm3.localdomain      | Secondary Instance  (R/O) |
+</td>
+<td>
 ![Cluster Architecture](imgs/innodb-cluster.png)
+</td>
+</tr> </table>
+
+<img src="imgs/innodb-cluster.png" alt="Cluster Architecture" height="400" style="display: block; margin-left: auto; margin-right: auto;">  
+
