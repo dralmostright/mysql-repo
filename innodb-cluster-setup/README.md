@@ -136,6 +136,7 @@ By editing and appending last three lines as below in /etc/hosts file the host n
 
 Test node reachability
 * From mysqlvm1
+```
 [root@mysqlvm1 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
 PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
 64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=0.042 ms
@@ -159,8 +160,9 @@ PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.842/0.842/0.842/0.000 ms
 
 [root@mysqlvm1 ~]#
-
+```
 * From mysqlvm2
+```
 [root@mysqlvm2 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
 PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
 64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=1.99 ms
@@ -184,8 +186,9 @@ PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
 rtt min/avg/max/mdev = 1.168/1.168/1.168/0.000 ms
 
 [root@mysqlvm2 ~]#
-
+```
 * From mysqlvm3
+```
 [root@mysqlvm3 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
 PING mysqlvm1.localdomain (192.168.229.138) 56(84) bytes of data.
 64 bytes from mysqlvm1.localdomain (192.168.229.138): icmp_seq=1 ttl=64 time=1.05 ms
@@ -209,7 +212,7 @@ PING mysqlvm3.localdomain (192.168.229.136) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.043/0.043/0.043/0.000 ms
 
 [root@mysqlvm3 ~]#
-
+```
 
 ### Install the MySQL RPM's and its suppliment packages in each server
 ```
