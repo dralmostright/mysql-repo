@@ -260,9 +260,55 @@ Seems we forgot to install mysqlshell and router rpms, we will install them too.
 [root@mysqlvm1 ~]# yum install mysql-router-community-8.0.35-1.el8.x86_64.rpm mysql-shell-8.0.35-1.el8.x86_64.rpm
 Last metadata expiration check: 0:13:54 ago on Sun 17 Dec 2023 05:45:28 PM +0545.
 Dependencies resolved.
+=============================================================================================================================================================================================
+ Package                                           Architecture                   Version                                                        Repository                             Size
+=============================================================================================================================================================================================
+Installing:
+ mysql-router-community                            x86_64                         8.0.35-1.el8                                                   @commandline                          5.1 M
+ mysql-shell                                       x86_64                         8.0.35-1.el8                                                   @commandline                           28 M
+Installing dependencies:
+ python39-libs                                     x86_64                         3.9.18-1.module+el8.9.0+90071+8dc52a4f                         ol8_appstream                         8.2 M
+ python39-pip-wheel                                noarch                         20.2.4-8.module+el8.9.0+90016+9c2d6573                         ol8_appstream                         1.1 M
+ python39-setuptools-wheel                         noarch                         50.3.2-4.module+el8.9.0+90016+9c2d6573                         ol8_appstream                         497 k
+Enabling module streams:
+ python39                                                                         3.9
 
-.........
-.........
+Transaction Summary
+=============================================================================================================================================================================================
+Install  5 Packages
+
+Total size: 43 M
+Total download size: 9.8 M
+Installed size: 259 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/3): python39-setuptools-wheel-50.3.2-4.module+el8.9.0+90016+9c2d6573.noarch.rpm                                                                           1.9 MB/s | 497 kB     00:00
+(2/3): python39-pip-wheel-20.2.4-8.module+el8.9.0+90016+9c2d6573.noarch.rpm                                                                                  2.5 MB/s | 1.1 MB     00:00
+(3/3): python39-libs-3.9.18-1.module+el8.9.0+90071+8dc52a4f.x86_64.rpm                                                                                        12 MB/s | 8.2 MB     00:00
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                         14 MB/s | 9.8 MB     00:00
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                                                     1/1
+  Installing       : python39-setuptools-wheel-50.3.2-4.module+el8.9.0+90016+9c2d6573.noarch                                                                                             1/5
+  Installing       : python39-pip-wheel-20.2.4-8.module+el8.9.0+90016+9c2d6573.noarch                                                                                                    2/5
+  Installing       : python39-libs-3.9.18-1.module+el8.9.0+90071+8dc52a4f.x86_64                                                                                                         3/5
+  Installing       : mysql-shell-8.0.35-1.el8.x86_64                                                                                                                                     4/5
+  Running scriptlet: mysql-router-community-8.0.35-1.el8.x86_64                                                                                                                          5/5
+  Installing       : mysql-router-community-8.0.35-1.el8.x86_64                                                                                                                          5/5
+  Running scriptlet: mysql-router-community-8.0.35-1.el8.x86_64                                                                                                                          5/5
+/sbin/ldconfig: /etc/ld.so.conf.d/kernel-5.4.17-2102.201.3.el8uek.x86_64.conf:6: hwcap directive ignored
+
+/sbin/ldconfig: /etc/ld.so.conf.d/kernel-5.4.17-2102.201.3.el8uek.x86_64.conf:6: hwcap directive ignored
+
+  Verifying        : python39-libs-3.9.18-1.module+el8.9.0+90071+8dc52a4f.x86_64                                                                                                         1/5
+  Verifying        : python39-pip-wheel-20.2.4-8.module+el8.9.0+90016+9c2d6573.noarch                                                                                                    2/5
+  Verifying        : python39-setuptools-wheel-50.3.2-4.module+el8.9.0+90016+9c2d6573.noarch                                                                                             3/5
+  Verifying        : mysql-router-community-8.0.35-1.el8.x86_64                                                                                                                          4/5
+  Verifying        : mysql-shell-8.0.35-1.el8.x86_64                                                                                                                                     5/5
 
 Installed:
   mysql-router-community-8.0.35-1.el8.x86_64                                                       mysql-shell-8.0.35-1.el8.x86_64
