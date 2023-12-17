@@ -134,7 +134,7 @@ By editing and appending last three lines as below in /etc/hosts file the host n
 ```
 <hr >
 
-Test node reachability
+### Test node reachability
 * From mysqlvm1
 ```
 [root@mysqlvm1 ~]# for i in 1 2 3; do ping mysqlvm$i -c 1; echo " "; done
@@ -213,6 +213,70 @@ rtt min/avg/max/mdev = 0.043/0.043/0.043/0.000 ms
 
 [root@mysqlvm3 ~]#
 ```
+<hr >
+
+### Configure MySQL instance directories and parameters
+We will not be using default directories to hold mysql configuration and data, hence we have created seperate paritions for data and binlog and this needs to be done on all mysql server instances.
+
+```
+[root@mysqlvm1 ~]# df -Ph | grep 'pgdata\|walarc'
+/dev/mapper/ol-pgdata  5.0G   68M  5.0G   2% /pgdata
+/dev/mapper/ol-walarc  2.0G   47M  2.0G   3% /walarc
+[root@mysqlvm1 ~]#
+```
+
+Create respecitive directories and change permission and this needs to be done in all instances
+```
+[root@mysqlvm1 ~]# mkdir -pv /pgdata/mysql/
+mkdir: created directory '/pgdata/mysql/'
+[root@mysqlvm1 ~]# mkdir -pv /pgdata/mysql/data
+mkdir: created directory '/pgdata/mysql/data'
+[root@mysqlvm1 ~]# mkdir -pv /pgdata/mysql/log
+mkdir: created directory '/pgdata/mysql/log'
+[root@mysqlvm1 ~]# mkdir -pv /pgdata/mysqlrouter
+mkdir: created directory '/pgdata/mysqlrouter'
+[root@mysqlvm1 ~]# mkdir -pv /walarc/mysql/binlog/
+mkdir: created directory '/walarc/mysql'
+mkdir: created directory '/walarc/mysql/binlog/'
+[root@mysqlvm1 ~]#
+[root@mysqlvm1 ~]# chown -R mysql:mysql /pgdata/mysql
+[root@mysqlvm1 ~]# chmod -R 775 /pgdata/mysql
+[root@mysqlvm1 ~]# chown -R mysql:mysql /walarc/mysql/
+[root@mysqlvm1 ~]# chmod -R 775 /walarc/mysql/
+[root@mysqlvm1 ~]# chown -R mysqlrouter:mysqlrouter /pgdata/mysqlrouter/
+
+```
+
+Update the parameters to the directories created and copy this file in all instances
+```
+[root@mysqlvm1 ~]# vi /etc/my.cnf
+```
+
+```
+[root@mysqlvm1 ~]# cat /etc/my.cnf | grep -v '#'
+
+[mysqld]
+
+datadir=/pgdata/mysql/data
+socket=/pgdata/mysql/data/mysql.sock
+log-bin=/walarc/mysql/binlog
+log-error=/pgdata/mysql/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+[root@mysqlvm1 ~]#
+```
+
+Copy the update configuration in all nodes:
+```
+[root@mysqlvm1 ~]# scp /etc/my.cnf mysqlvm2://etc/my.cnf
+root@mysqlvm2's password:
+my.cnf                                                                     100% 1288   260.3KB/s   00:00
+[root@mysqlvm1 ~]# scp /etc/my.cnf mysqlvm3://etc/my.cnf
+root@mysqlvm3's password:
+my.cnf                                                                     100% 1288   264.7KB/s   00:00
+[root@mysqlvm1 ~]#
+```
+<hr >
+
 
 ### Install the MySQL RPM's and its suppliment packages in each server
 ```
@@ -425,5 +489,52 @@ Complete!
 ● mysqlrouter.service - MySQL Router
    Loaded: loaded (/usr/lib/systemd/system/mysqlrouter.service; disabled; vendor preset: disabled)
    Active: inactive (dead)
+[root@mysqlvm1 ~]#
+```
+
+### Configure/Initialize MySQL Server Instance
+After all parameters are set now initialize the mysql database, which creates all metadata and other necessary configurations. This needs to be done on all mysql server instances.
+```
+[root@mysqlvm1 ~]# mysqld --initialize
+[root@mysqlvm1 ~]#
+```
+After initialization is completed it will generate a temporary root password and it can be view in the mysql logfile as below. Later we will change the password of the root.
+```
+[root@mysqlvm1 ~]# tail -5f /pgdata/mysql/log/mysqld.log
+2023-12-17T13:18:54.719547Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.35)  MySQL Community Server - GPL.
+2023-12-17T13:21:34.361935Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.35) initializing of server in progress as process 3626
+2023-12-17T13:21:34.367465Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2023-12-17T13:21:34.595848Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2023-12-17T13:21:35.125972Z 6 [Note] [MY-010454] [Server] A temporary password is generated for root@localhost: BJ-!55HHhqC*
+```
+
+The initialization of mysql instance reverts the permission which we have set earlier hence we need to redo this, else during startup it will fail. This needs to be done on all mysql server instances.
+```
+[root@mysqlvm1 ~]# chown -R mysql:mysql /pgdata/mysql
+[root@mysqlvm1 ~]# chown -R mysql:mysql /walarc/mysql
+[root@mysqlvm1 ~]#
+```
+Once Done, finally startup the mysql instance and view the status. This needs to be done on all mysql server instances.
+```
+[root@mysqlvm1 ~]# systemctl start mysqld
+[root@mysqlvm1 ~]# systemcl status mysqld
+[root@mysqlvm1 ~]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; disabled; vendor preset: disabled)
+   Active: active (running) since Sun 2023-12-17 19:09:26 +0545; 27s ago
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+  Process: 3757 ExecStartPre=/usr/bin/mysqld_pre_systemd (code=exited, status=0/SUCCESS)
+ Main PID: 3784 (mysqld)
+   Status: "Server is operational"
+    Tasks: 38 (limit: 22960)
+   Memory: 403.2M
+   CGroup: /system.slice/mysqld.service
+           └─3784 /usr/sbin/mysqld
+
+Dec 17 19:09:25 mysqlvm1.localdomain systemd[1]: Starting MySQL Server...
+Dec 17 19:09:26 mysqlvm1.localdomain systemd[1]: Started MySQL Server.
+[root@mysqlvm1 ~]# systemctl enable mysqld
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqld.service → /usr/lib/systemd/system/mysqld.service.
 [root@mysqlvm1 ~]#
 ```
