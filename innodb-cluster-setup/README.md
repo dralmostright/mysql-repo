@@ -52,11 +52,27 @@ wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-libs-8.0.35-1
 wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-icu-data-files-8.0.35-1.el8.x86_64.rpm
 wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-client-plugins-8.0.35-1.el8.x86_64.rpm
 wget https://dev.mysql.com/get/Downloads/MySQL-Router/mysql-router-community-8.0.35-1.el8.x86_64.rpm
+wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.35-1.el8.x86_64.rpm
+```
+
+```
+[root@mysqlvm1 ~]# ls -ltr | grep rpm
+-rw-r--r--  1 root root 29226220 Oct 15 15:59 mysql-shell-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root 16724688 Oct 16 11:14 mysql-community-client-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root  3725096 Oct 16 11:14 mysql-community-client-plugins-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root   683572 Oct 16 11:14 mysql-community-common-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root  2305100 Oct 16 11:15 mysql-community-devel-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root  2347332 Oct 16 11:15 mysql-community-icu-data-files-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root  1564500 Oct 16 11:15 mysql-community-libs-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root 67554704 Oct 16 11:16 mysql-community-server-8.0.35-1.el8.x86_64.rpm
+-rw-r--r--  1 root root  5372088 Oct 16 11:19 mysql-router-community-8.0.35-1.el8.x86_64.rpm
+[root@mysqlvm1 ~]#
 ```
 
 Alternatively, we can download from below link too:
 * [MySQL Communitiy Edition RPM's](https://dev.mysql.com/downloads/mysql/)
 * [MySQL Router RPM](https://dev.mysql.com/downloads/router/)
+* [MySQL Shell RPM](https://dev.mysql.com/downloads/shell/)
 
 <hr >
 
@@ -103,6 +119,7 @@ SELinux status:                 disabled
 ```
 <hr >
 
+### Install the MySQL RPM's and its suppliment packages
 ```
 [root@mysqlvm1 ~]# yum install mysql-community-client-8.0.35-1.el8.x86_64.rpm \
 > mysql-community-client-plugins-8.0.35-1.el8.x86_64.rpm \
@@ -237,4 +254,22 @@ Complete!
 [root@mysqlvm1 ~]#
 ```
 I am using yum so that in case of any dependencies it will auto download the required rpm's. If you have any issues with installing rpm's i would suggest configuring public yum repo using the link [OEL 8 Public Yum Repo](https://yum.oracle.com/getting-started.html)
+
+Seems we forgot to install mysqlshell and router rpms, we will install them too. These two can be installed in only one server and on rest they are optional.
+```
+[root@mysqlvm1 ~]# yum install mysql-router-community-8.0.35-1.el8.x86_64.rpm mysql-shell-8.0.35-1.el8.x86_64.rpm
+Last metadata expiration check: 0:13:54 ago on Sun 17 Dec 2023 05:45:28 PM +0545.
+Dependencies resolved.
+
+.........
+.........
+
+Installed:
+  mysql-router-community-8.0.35-1.el8.x86_64                                                       mysql-shell-8.0.35-1.el8.x86_64
+  python39-libs-3.9.18-1.module+el8.9.0+90071+8dc52a4f.x86_64                                      python39-pip-wheel-20.2.4-8.module+el8.9.0+90016+9c2d6573.noarch
+  python39-setuptools-wheel-50.3.2-4.module+el8.9.0+90016+9c2d6573.noarch
+
+Complete!
+[root@mysqlvm1 ~]#
+```
 
