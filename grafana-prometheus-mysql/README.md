@@ -9,7 +9,8 @@ Even if there is a failure, we can easily troubleshoot the issue with the availa
 Steps to Enable MySQL Database Monitoring Using Prometheus and Grafana
 * Install and configure Grafana
 * Install and configure Prometheus
-* Install a database exporter
+* Install a database exporter for Mysql
+* Configure Grafana Dashboard
 
 <hr >
 
@@ -106,7 +107,7 @@ When you provide default password it may request you to change the password, whi
 
 ### Install and configure Prometheus
 
-> - To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
+> - <u> To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.</u>
 
 ```
 [root@watchsrv ~]# wget https://github.com/prometheus/prometheus/releases/download/v2.45.2/prometheus-2.45.2.linux-amd64.tar.gz
@@ -128,7 +129,7 @@ prometheus-2.45.2.l 100%[===================>]  88.29M   206KB/s    in 2m 10s
 
 [root@watchsrv ~]#
 ```
-> - Once the binaries are downloaded lets unzip it.
+> - <u>Once the binaries are downloaded lets unzip it.</u>
 
 ```
 [root@watchsrv ~]# tar -xvf prometheus-2.45.2.linux-amd64.tar.gz
@@ -155,7 +156,7 @@ drwxr-xr-x  4 1001  127      132 Dec 19 20:19 prometheus-2.45.2.linux-amd64
 [root@watchsrv ~]#
 ```
 
-> - Create a Prometheus System Group & User and directories
+> - <u>Create a Prometheus System Group & User and directories</u>
 ```
 [root@watchsrv ~]# groupadd --system prometheus
 [root@watchsrv ~]# useradd -s /sbin/nologin --system -g prometheus prometheus
