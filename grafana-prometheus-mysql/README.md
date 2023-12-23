@@ -103,7 +103,7 @@ When you provide default password it may request you to change the password, whi
 
 ### Install and configure Prometheus
 
-To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
+> To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
 
 ```
 [root@watchsrv ~]# wget https://github.com/prometheus/prometheus/releases/download/v2.45.2/prometheus-2.45.2.linux-amd64.tar.gz
@@ -125,7 +125,8 @@ prometheus-2.45.2.l 100%[===================>]  88.29M   206KB/s    in 2m 10s
 
 [root@watchsrv ~]#
 ```
-Lets unzip the binaries.
+> Once the binaries are downloaded lets unzip it.
+
 ```
 [root@watchsrv ~]# tar -xvf prometheus-2.45.2.linux-amd64.tar.gz
 prometheus-2.45.2.linux-amd64/
@@ -151,7 +152,7 @@ drwxr-xr-x  4 1001  127      132 Dec 19 20:19 prometheus-2.45.2.linux-amd64
 [root@watchsrv ~]#
 ```
 
-1. Create a Prometheus System Group & User and directories
+> Create a Prometheus System Group & User and directories
 ```
 [root@watchsrv ~]# groupadd --system prometheus
 [root@watchsrv ~]# useradd -s /sbin/nologin --system -g prometheus prometheus
@@ -165,6 +166,8 @@ mkdir: created directory '/etc/prometheus'
 [root@watchsrv ~]#
 ```
 
+> Copy configuration files and set permission accordingly
+
 ```
 [root@watchsrv prometheus-2.45.2.linux-amd64]# pwd
 /root/prometheus-2.45.2.linux-amd64
@@ -173,13 +176,10 @@ mkdir: created directory '/etc/prometheus'
 console_libraries  LICENSE  prometheus      promtool
 consoles           NOTICE   prometheus.yml
 [root@watchsrv prometheus-2.45.2.linux-amd64]# mv prometheus promtool /usr/local/bin/
-[root@watchsrv prometheus-2.45.2.linux-amd64]# chown prometheus:prometheus /usr/local/bin/prometheu^C
 [root@watchsrv prometheus-2.45.2.linux-amd64]# cd
+[root@watchsrv ~]#
 [root@watchsrv ~]# chown prometheus:prometheus /usr/local/bin/prometheus
 [root@watchsrv ~]# chown prometheus:prometheus /usr/local/bin/promtool
-```
-
-```
 [root@watchsrv ~]# cp -r prometheus-2.45.2.linux-amd64/consoles /etc/prometheus
 [root@watchsrv ~]# cp -r prometheus-2.45.2.linux-amd64/console_libraries /etc/prometheus
 [root@watchsrv ~]# chown -R prometheus:prometheus /etc/prometheus/consoles
@@ -187,13 +187,14 @@ consoles           NOTICE   prometheus.yml
 [root@watchsrv ~]#
 ```
 
+> For now copy the default configuration file for Prometheus
 ```
 [root@watchsrv ~]# cp prometheus-2.45.2.linux-amd64/prometheus.yml /etc/prometheus/prometheus.yml
 [root@watchsrv ~]# chown prometheus:prometheus /etc/prometheus/prometheus.yml
 [root@watchsrv ~]#
 ```
 
-We will be using the temaplate as it is without any change if needed we will change it in future
+> We will be using the temaplate as it is without any change if needed we will change it in future
 ```
 [root@watchsrv ~]# cat /etc/prometheus/prometheus.yml
 # my global config
@@ -228,6 +229,8 @@ scrape_configs:
 [root@watchsrv ~]#
 ```
 
+> Create a Prometheus systemd Service Unit File
+
 ```
 [root@watchsrv ~]# vi /etc/systemd/system/prometheus.service
 [root@watchsrv ~]# cat /etc/systemd/system/prometheus.service
@@ -259,6 +262,7 @@ WantedBy=multi-user.target
 [root@watchsrv ~]#
 ```
 
+> Reload systemd Daemon & Start the Service
 ```
 [root@watchsrv ~]# systemctl daemon-reload
 [root@watchsrv ~]# systemctl status prometheus
@@ -290,7 +294,7 @@ Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 [root@watchsrv ~]#
 ```
-
+> Once the setup is complete, you can access the Prometheus UI by logging in to http:/<Server Name/Server IP>/:9090, as below.
 <img src="imgs/prometheus-initial.png" alt="Grafana Initial User Interface"> 
 
 ### Installing & Configuring MySQL Prometheus Exporter
@@ -298,3 +302,365 @@ Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 Prometheus requires an exporter for collecting MySQL server metrics. This exporter can be run centrally on the Prometheus server or locally on the MySQL database server. For further reading, refer to this [Prometheus documentation](https://prometheus.io/docs/instrumenting/writing_exporters/#deployment).
 
 Follow the below steps to install and setup MySQL Prometheus Exporter on the central Prometheus host.
+
+> To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
+```
+[root@watchsrv ~]# wget https://github.com/prometheus/mysqld_exporter/releases/download/v0.15.1/mysqld_exporter-0.15.1.linux-amd64.tar.gz
+--2023-12-23 18:33:37--  https://github.com/prometheus/mysqld_exporter/releases/download/v0.15.1/mysqld_exporter-0.15.1.linux-amd64.tar.gz
+Resolving github.com (github.com)... 20.205.243.166
+Connecting to github.com (github.com)|20.205.243.166|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/32075541/ab36c0ef-84bc-41a2-a1f6-f2545b8d4054?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20231223%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231223T124838Z&X-Amz-Expires=300&X-Amz-Signature=a0fef14c42b3876b7cd41f9fcfb1afb638b3a438810a29d3ccef22186c5709a8&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=32075541&response-content-disposition=attachment%3B%20filename%3Dmysqld_exporter-0.15.1.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream [following]
+--2023-12-23 18:33:38--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/32075541/ab36c0ef-84bc-41a2-a1f6-f2545b8d4054?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20231223%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231223T124838Z&X-Amz-Expires=300&X-Amz-Signature=a0fef14c42b3876b7cd41f9fcfb1afb638b3a438810a29d3ccef22186c5709a8&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=32075541&response-content-disposition=attachment%3B%20filename%3Dmysqld_exporter-0.15.1.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.109.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 8287769 (7.9M) [application/octet-stream]
+Saving to: ‘mysqld_exporter-0.15.1.linux-amd64.tar.gz’
+
+mysqld_exporter-0.1 100%[===================>]   7.90M  2.51MB/s    in 3.2s
+
+2023-12-23 18:33:43 (2.51 MB/s) - ‘mysqld_exporter-0.15.1.linux-amd64.tar.gz’ saved [8287769/8287769]
+
+[root@watchsrv ~]#
+```
+
+> Once its downloaded lets unzip it and move to /usr/local/bin
+
+```
+[root@watchsrv ~]# tar -xvf mysqld_exporter-0.15.1.linux-amd64.tar.gz
+mysqld_exporter-0.15.1.linux-amd64/
+mysqld_exporter-0.15.1.linux-amd64/LICENSE
+mysqld_exporter-0.15.1.linux-amd64/mysqld_exporter
+mysqld_exporter-0.15.1.linux-amd64/NOTICE
+[root@watchsrv ~]# mv mysqld_exporter-0.15.1.linux-amd64 mysqld_exporter
+[root@watchsrv ~]# cd mysqld_exporter/
+[root@watchsrv mysqld_exporter]# cp mysqld_exporter /usr/local/bin/
+[root@watchsrv mysqld_exporter]# chmod +x /usr/local/bin/mysqld_exporter
+[root@watchsrv mysqld_exporter]#
+```
+
+> Create the user in mysql dedicated for monitoring.
+
+```
+[root@mysqlvm1 ~]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8571
+Server version: 8.0.35 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'mysqldexp'@'%' IDENTIFIED BY 'admin123' WITH MAX_USER_CONNECTIONS 2;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'mysqldexp'@'%';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> exit
+Bye
+[root@mysqlvm1 ~]#
+```
+
+```
+[root@watchsrv ~]# vi /etc/mysqldmymysqlvm1.cnf
+[root@watchsrv ~]# cp /etc/mysqldmymysqlvm1.cnf /etc/mysqldmymysqlvm2.cnf
+[root@watchsrv ~]# cp /etc/mysqldmymysqlvm1.cnf /etc/mysqldmymysqlvm3.cnf
+[root@watchsrv ~]# vi /etc/mysqldmymysqlvm2.cnf
+[root@watchsrv ~]# vi /etc/mysqldmymysqlvm3.cnf
+[root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm1.cnf
+[root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm2.cnf
+[root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm3.cnf
+[root@watchsrv ~]# cat /etc/mysqldmymysqlvm1.cnf
+[client]
+user=mysqldexp
+password=admin123
+host=mysqlvm1.localdomain
+[root@watchsrv ~]# cat /etc/mysqldmymysqlvm2.cnf
+[client]
+user=mysqldexp
+password=admin123
+host=mysqlvm2.localdomain
+[root@watchsrv ~]# cat /etc/mysqldmymysqlvm3.cnf
+[client]
+user=mysqldexp
+password=admin123
+host=mysqlvm3.localdomain
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm1.service
+[root@watchsrv ~]# cp /etc/systemd/system/mysqldmymysqlvm1.service /etc/systemd/system/mysqldmymysqlvm2.service
+[root@watchsrv ~]# cp /etc/systemd/system/mysqldmymysqlvm1.service /etc/systemd/system/mysqldmymysqlvm3.service
+[root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm2.service
+[root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm3.service
+[root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm1.service
+[Unit]
+Description=Prometheus MySQL Exporter
+After=network.target
+User=prometheus
+Group=prometheus
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/mysqld_exporter \
+--config.my-cnf /etc/mysqldmymysqlvm1.cnf \
+--collect.global_status \
+--collect.info_schema.innodb_metrics \
+--collect.auto_increment.columns \
+--collect.info_schema.processlist \
+--collect.binlog_size \
+--collect.info_schema.tablestats \
+--collect.global_variables \
+--collect.info_schema.query_response_time \
+--collect.info_schema.userstats \
+--collect.info_schema.tables \
+--collect.perf_schema.tablelocks \
+--collect.perf_schema.file_events \
+--collect.perf_schema.eventswaits \
+--collect.perf_schema.indexiowaits \
+--collect.perf_schema.tableiowaits \
+--collect.slave_status \
+--web.listen-address=0.0.0.0:9104
+
+[Install]
+WantedBy=multi-user.target
+[root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm2.service
+[Unit]
+Description=Prometheus MySQL Exporter
+After=network.target
+User=prometheus
+Group=prometheus
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/mysqld_exporter \
+--config.my-cnf /etc/mysqldmymysqlvm2.cnf \
+--collect.global_status \
+--collect.info_schema.innodb_metrics \
+--collect.auto_increment.columns \
+--collect.info_schema.processlist \
+--collect.binlog_size \
+--collect.info_schema.tablestats \
+--collect.global_variables \
+--collect.info_schema.query_response_time \
+--collect.info_schema.userstats \
+--collect.info_schema.tables \
+--collect.perf_schema.tablelocks \
+--collect.perf_schema.file_events \
+--collect.perf_schema.eventswaits \
+--collect.perf_schema.indexiowaits \
+--collect.perf_schema.tableiowaits \
+--collect.slave_status \
+--web.listen-address=0.0.0.0:9105
+
+[Install]
+WantedBy=multi-user.target
+[root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm3.service
+[Unit]
+Description=Prometheus MySQL Exporter
+After=network.target
+User=prometheus
+Group=prometheus
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/mysqld_exporter \
+--config.my-cnf /etc/mysqldmymysqlvm3.cnf \
+--collect.global_status \
+--collect.info_schema.innodb_metrics \
+--collect.auto_increment.columns \
+--collect.info_schema.processlist \
+--collect.binlog_size \
+--collect.info_schema.tablestats \
+--collect.global_variables \
+--collect.info_schema.query_response_time \
+--collect.info_schema.userstats \
+--collect.info_schema.tables \
+--collect.perf_schema.tablelocks \
+--collect.perf_schema.file_events \
+--collect.perf_schema.eventswaits \
+--collect.perf_schema.indexiowaits \
+--collect.perf_schema.tableiowaits \
+--collect.slave_status \
+--web.listen-address=0.0.0.0:9106
+
+[Install]
+WantedBy=multi-user.target
+[root@watchsrv ~]#
+
+
+```
+
+```
+[root@watchsrv ~]# systemctl daemon-reload
+[root@watchsrv ~]#
+[root@watchsrv ~]# systemctl enable mysqldmymysqlvm1
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqldmymysqlvm1.service → /etc/systemd/system/mysqldmymysqlvm1.service.
+[root@watchsrv ~]# systemctl enable mysqldmymysqlvm2
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqldmymysqlvm2.service → /etc/systemd/system/mysqldmymysqlvm2.service.
+[root@watchsrv ~]# systemctl enable mysqldmymysqlvm3
+Created symlink /etc/systemd/system/multi-user.target.wants/mysqldmymysqlvm3.service → /etc/systemd/system/mysqldmymysqlvm3.service.
+[root@watchsrv ~]#
+[root@watchsrv ~]# systemctl start mysqldmymysqlvm1
+[root@watchsrv ~]# systemctl start mysqldmymysqlvm2
+[root@watchsrv ~]# systemctl start mysqldmymysqlvm3
+[root@watchsrv ~]#
+[root@watchsrv ~]# systemctl status mysqldmymysqlvm1
+● mysqldmymysqlvm1.service - Prometheus MySQL Exporter
+   Loaded: loaded (/etc/systemd/system/mysqldmymysqlvm1.service; disabled; vend>
+   Active: active (running) since Sat 2023-12-23 19:27:15 +0545; 13s ago
+ Main PID: 5936 (mysqld_exporter)
+    Tasks: 4 (limit: 22960)
+   Memory: 2.6M
+   CGroup: /system.slice/mysqldmymysqlvm1.service
+           └─5936 /usr/local/bin/mysqld_exporter --config.my-cnf /etc/mysqldmym>
+
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+Dec 23 19:27:15 watchsrv.localdomain mysqld_exporter[5936]: ts=2023-12-23T13:42>
+[root@watchsrv ~]#
+[root@watchsrv ~]# systemctl status mysqldmymysqlvm2
+● mysqldmymysqlvm2.service - Prometheus MySQL Exporter
+   Loaded: loaded (/etc/systemd/system/mysqldmymysqlvm2.service; disabled; vend>
+   Active: active (running) since Sat 2023-12-23 19:27:17 +0545; 14s ago
+ Main PID: 5942 (mysqld_exporter)
+    Tasks: 4 (limit: 22960)
+   Memory: 2.6M
+   CGroup: /system.slice/mysqldmymysqlvm2.service
+           └─5942 /usr/local/bin/mysqld_exporter --config.my-cnf /etc/mysqldmym>
+
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+Dec 23 19:27:17 watchsrv.localdomain mysqld_exporter[5942]: ts=2023-12-23T13:42>
+[root@watchsrv ~]#
+[root@watchsrv ~]# systemctl status mysqldmymysqlvm3
+● mysqldmymysqlvm3.service - Prometheus MySQL Exporter
+   Loaded: loaded (/etc/systemd/system/mysqldmymysqlvm3.service; disabled; vend>
+   Active: active (running) since Sat 2023-12-23 19:27:19 +0545; 16s ago
+ Main PID: 5948 (mysqld_exporter)
+    Tasks: 4 (limit: 22960)
+   Memory: 2.6M
+   CGroup: /system.slice/mysqldmymysqlvm3.service
+           └─5948 /usr/local/bin/mysqld_exporter --config.my-cnf /etc/mysqldmym>
+
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# vi /etc/prometheus/prometheus.yml
+[root@watchsrv ~]# cat /etc/prometheus/prometheus.yml
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "mysqlvm1"
+    static_configs:
+      - targets: ["localhost:9104"]
+  - job_name: "mysqlvm2"
+    static_configs:
+      - targets: ['localhost:9105']
+  - job_name: "mysqlvm3"
+    static_configs:
+      - targets: ['localhost:9106']
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# systemctl stop prometheus
+[root@watchsrv ~]# systemctl start prometheus
+[root@watchsrv ~]# systemctl status prometheus
+● prometheus.service - Prometheus
+   Loaded: loaded (/etc/systemd/system/prometheus.service; disabled; vendor pre>
+   Active: active (running) since Sat 2023-12-23 20:44:50 +0545; 11s ago
+     Docs: https://prometheus.io/docs/introduction/overview/
+ Main PID: 7474 (prometheus)
+    Tasks: 7 (limit: 22960)
+   Memory: 47.6M
+   CGroup: /system.slice/prometheus.service
+           └─7474 /usr/local/bin/prometheus --config.file=/etc/prometheus/prome>
+
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
+[root@watchsrv ~]#
+
+
+```
+
+```
+[root@watchsrv ~]# wget https://github.com/percona/grafana-dashboards/blob/main/dashboards/MySQL/MySQL_Instances_Overview.json
+--2023-12-23 19:56:43--  https://github.com/percona/grafana-dashboards/blob/main/dashboards/MySQL/MySQL_Instances_Overview.json
+Resolving github.com (github.com)... 20.205.243.166
+Connecting to github.com (github.com)|20.205.243.166|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1100095 (1.0M) [text/plain]
+Saving to: ‘MySQL_Instances_Overview.json’
+
+MySQL_Instances_Ove 100%[===================>]   1.05M   170KB/s    in 7.8s
+
+2023-12-23 19:56:53 (137 KB/s) - ‘MySQL_Instances_Overview.json’ saved [1100095/1100095]
+
+[root@watchsrv ~]#
+```
