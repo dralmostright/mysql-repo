@@ -11,6 +11,7 @@ Steps to Enable MySQL Database Monitoring Using Prometheus and Grafana
 * Install and configure Prometheus
 * Install a database exporter
 
+<hr >
 ### Install and configure Grafana
 
 The Grafana binaries are publicly available to download from [Grafana Binaries](https://grafana.com/grafana/download). We are using the latest binaries and directly install it. You can download locally first using wget and later install too.
@@ -94,11 +95,11 @@ Dec 23 17:45:17 watchsrv.localdomain grafana[3489]: logger=plugins.update.check>
 [root@watchsrv ~]#
 ```
 
-Now lets test if its running. Grafana uses 3000 port so obtaining the server ip we will hith the url as below:
+Now lets test if its running. Grafana uses 3000 port so obtaining the server ip we will hith the url as below. And the Default login and password of Grafana are: <strong>admin/admin<strong>, default location Grafana will log into: /var/log/Grafana.
 <img src="imgs/grafana-initial.png" alt="Grafana Initial User Interface"> 
 
-
-yum install -y https://dl.grafana.com/enterprise/release/grafana-enterprise-10.2.3-1.x86_64.rpm
+When you provide default password it may request you to change the password, which you can or skip it but i have changed it in my case and the initial dashboard look like below:
+<img src="imgs/grafana-login.png" alt="Grafana Initial Dashboard"> 
 
 ### Install and configure Prometheus
 
