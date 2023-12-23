@@ -663,6 +663,12 @@ Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
 
 ```
 
+> - View the endpoints in Prometheus
+<img src="imgs/prometheus-targets.png" alt="Grafana Prometheus Targets"> 
+
+> - Verify its working by clicking Graph and typing mysql and choose any
+<img src="imgs/prometheus-query.png" alt="Grafana Prometheus Targets"> 
+
 <hr >
 
 ### Adding a Data Source in Gafana
@@ -681,5 +687,4 @@ Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
 
 Thats it data source addition to Grafana is completed.
 
-<img src="imgs/datasource-1.png" alt="Grafana Initial Dashboard"> 
-<img src="imgs/datasource-1.png" alt="Grafana Initial Dashboard"> 
+### Build MySQL Dashboard
