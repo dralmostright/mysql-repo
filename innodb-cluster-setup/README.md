@@ -1456,3 +1456,4 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
+https://dev.mysql.com/blog-archive/mysql-innodb-cluster-8-0-a-hands-on-tutorial/
