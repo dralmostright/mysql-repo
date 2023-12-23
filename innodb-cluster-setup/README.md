@@ -1605,3 +1605,141 @@ Enter password:
 +------------------------------+----------------------+-------------+-------------------+
 [root@mysqlvm1 mysqlrouter]#
 ```
+
+### Checking failover
+Lets stop mysql service on primary and try to connect
+```
+[root@mysqlvm1 ~]# systemctl stop mysqld
+[root@mysqlvm1 ~]#
+
+[root@mysqlvm1 mysqlrouter]# mysql -utestusr -p -hmysqlvm1 -P6446 -e 'select user(), @@hostname, @@read_only, @@super_read_only'
+Enter password:
++------------------------------+----------------------+-------------+-------------------+
+| user()                       | @@hostname           | @@read_only | @@super_read_only |
++------------------------------+----------------------+-------------+-------------------+
+| testusr@mysqlvm1.localdomain | mysqlvm3.localdomain |           0 |                 0 |
++------------------------------+----------------------+-------------+-------------------+
+[root@mysqlvm1 mysqlrouter]#
+```
+As we can see the there is new instance for Primary role and this is completely transparent to applications, and starting the mysql on the stopped node will automatically join the cluster.
+
+### Restart cluster from complete outage
+However, when all the nodes have been shutdown and started nodes may not join the cluster and below errors may be noticed in mysql log:
+```
+2023-12-23T07:52:51.037345Z 0 [ERROR] [MY-013781] [Repl] Plugin group_replication reported: 'Failed to establish MySQL client connection in Group Replication. Error sending connection delegation command. Please refer to the manual to make sure that you configured Group Replication properly to work with MySQL Protocol connections.'
+2023-12-23T07:52:51.038259Z 0 [ERROR] [MY-011735] [Repl] Plugin group_replication reported: '[GCS] Error on opening a connection to peer node mysqlvm2.localdomain:3306 when joining a group. My local port is: 3306.'
+2023-12-23T07:52:51.038300Z 0 [ERROR] [MY-011735] [Repl] Plugin group_replication reported: '[GCS] Error connecting to all peers. Member join failed. Local port: 3306'
+```
+
+When you try to get the cluster it will throw errors like below:
+```
+[root@mysqlvm1 mysqlrouter]# mysqlsh -uclusteradmin
+Please provide the password for 'clusteradmin@localhost': ********
+Save password for 'clusteradmin@localhost'? [Y]es/[N]o/Ne[v]er (default No):
+MySQL Shell 8.0.35
+
+Copyright (c) 2016, 2023, Oracle and/or its affiliates.
+Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+Other names may be trademarks of their respective owners.
+
+Type '\help' or '\?' for help; '\quit' to exit.
+Creating a session to 'clusteradmin@localhost'
+Fetching schema names for auto-completion... Press ^C to stop.
+Your MySQL connection id is 358 (X protocol)
+Server version: 8.0.35 MySQL Community Server - GPL
+No default schema selected; type \use <schema> to set one.
+ MySQL  localhost:33060+ ssl  JS > cluster = dba.getCluster();
+Dba.getCluster: This function is not available through a session to a standalone instance (metadata exists, instance belongs to that metadata, but GR is not active) (MYSQLSH 51314)
+ MySQL  localhost:33060+ ssl  JS >
+```
+
+And in this case you may need to reboot the whole cluster as below:
+
+````
+ MySQL  localhost:33060+ ssl  JS > dba.rebootClusterFromCompleteOutage('mysqlclus');
+Restoring the Cluster 'mysqlclus' from complete outage...
+
+Cluster instances: 'mysqlvm1.localdomain:3306' (OFFLINE), 'mysqlvm2.localdomain:3306' (OFFLINE), 'mysqlvm3.localdomain:3306' (OFFLINE)
+Waiting for instances to apply pending received transactions...
+Validating instance configuration at localhost:3306...
+
+This instance reports its own address as mysqlvm1.localdomain:3306
+
+Instance configuration is suitable.
+* Waiting for seed instance to become ONLINE...
+mysqlvm1.localdomain:3306 was restored.
+Validating instance configuration at mysqlvm2.localdomain:3306...
+
+This instance reports its own address as mysqlvm2.localdomain:3306
+
+Instance configuration is suitable.
+Rejoining instance 'mysqlvm2.localdomain:3306' to cluster 'mysqlclus'...
+
+Re-creating recovery account...
+NOTE: User 'mysql_innodb_cluster_636761201'@'%' already existed at instance 'mysqlvm1.localdomain:3306'. It will be deleted and created again with a new password.
+
+* Waiting for the Cluster to synchronize with the PRIMARY Cluster...
+** Transactions replicated  #############################################  100%
+
+The instance 'mysqlvm2.localdomain:3306' was successfully rejoined to the cluster.
+
+Validating instance configuration at mysqlvm3.localdomain:3306...
+
+This instance reports its own address as mysqlvm3.localdomain:3306
+
+Instance configuration is suitable.
+Rejoining instance 'mysqlvm3.localdomain:3306' to cluster 'mysqlclus'...
+
+Re-creating recovery account...
+NOTE: User 'mysql_innodb_cluster_2796149058'@'%' already existed at instance 'mysqlvm1.localdomain:3306'. It will be deleted and created again with a new password.
+
+* Waiting for the Cluster to synchronize with the PRIMARY Cluster...
+** Transactions replicated  #############################################  100%
+
+The instance 'mysqlvm3.localdomain:3306' was successfully rejoined to the cluster.
+
+The Cluster was successfully rebooted.
+
+<Cluster:mysqlclus>
+ MySQL  localhost:33060+ ssl  JS >
+ 
+ MySQL  localhost:33060+ ssl  JS > cluster.describe()
+{
+    "clusterName": "mysqlclus",
+    "defaultReplicaSet": {
+        "name": "default",
+        "topology": [
+            {
+                "address": "mysqlvm1.localdomain:3306",
+                "label": "mysqlvm1.localdomain:3306",
+                "role": "HA"
+            },
+            {
+                "address": "mysqlvm2.localdomain:3306",
+                "label": "mysqlvm2.localdomain:3306",
+                "role": "HA"
+            },
+            {
+                "address": "mysqlvm3.localdomain:3306",
+                "label": "mysqlvm3.localdomain:3306",
+                "role": "HA"
+            }
+        ],
+        "topologyMode": "Single-Primary"
+    }
+}
+ MySQL  localhost:33060+ ssl  JS >
+
+```
+
+### Some useful cmds:
+```
+shell.connect("clusteradmin@mysqlvm1:3306");
+cluster = dba.getCluster();
+select * from performance_schema.replication_group_members;
+select cluster_name,primary_mode,description from mysql_innodb_cluster_metadata.clusters;
+select instance_name, mysql_server_uuid, addresses from  mysql_innodb_cluster_metadata.instances;
+dba.rebootClusterFromCompleteOutage('mysqlclus');
+cluster.status()
+cluster.describe()
+```
