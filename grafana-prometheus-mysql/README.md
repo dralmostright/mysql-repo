@@ -12,6 +12,7 @@ Steps to Enable MySQL Database Monitoring Using Prometheus and Grafana
 * Install a database exporter
 
 <hr >
+
 ### Install and configure Grafana
 
 The Grafana binaries are publicly available to download from [Grafana Binaries](https://grafana.com/grafana/download). We are using the latest binaries and directly install it. You can download locally first using wget and later install too.
@@ -103,7 +104,7 @@ When you provide default password it may request you to change the password, whi
 
 ### Install and configure Prometheus
 
-> To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
+> - To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
 
 ```
 [root@watchsrv ~]# wget https://github.com/prometheus/prometheus/releases/download/v2.45.2/prometheus-2.45.2.linux-amd64.tar.gz
@@ -125,7 +126,7 @@ prometheus-2.45.2.l 100%[===================>]  88.29M   206KB/s    in 2m 10s
 
 [root@watchsrv ~]#
 ```
-> Once the binaries are downloaded lets unzip it.
+> - Once the binaries are downloaded lets unzip it.
 
 ```
 [root@watchsrv ~]# tar -xvf prometheus-2.45.2.linux-amd64.tar.gz
@@ -152,7 +153,7 @@ drwxr-xr-x  4 1001  127      132 Dec 19 20:19 prometheus-2.45.2.linux-amd64
 [root@watchsrv ~]#
 ```
 
-> Create a Prometheus System Group & User and directories
+> - Create a Prometheus System Group & User and directories
 ```
 [root@watchsrv ~]# groupadd --system prometheus
 [root@watchsrv ~]# useradd -s /sbin/nologin --system -g prometheus prometheus
@@ -166,7 +167,7 @@ mkdir: created directory '/etc/prometheus'
 [root@watchsrv ~]#
 ```
 
-> Copy configuration files and set permission accordingly
+> - Copy configuration files and set permission accordingly
 
 ```
 [root@watchsrv prometheus-2.45.2.linux-amd64]# pwd
@@ -187,14 +188,14 @@ consoles           NOTICE   prometheus.yml
 [root@watchsrv ~]#
 ```
 
-> For now copy the default configuration file for Prometheus
+> - For now copy the default configuration file for Prometheus
 ```
 [root@watchsrv ~]# cp prometheus-2.45.2.linux-amd64/prometheus.yml /etc/prometheus/prometheus.yml
 [root@watchsrv ~]# chown prometheus:prometheus /etc/prometheus/prometheus.yml
 [root@watchsrv ~]#
 ```
 
-> We will be using the temaplate as it is without any change if needed we will change it in future
+> - We will be using the temaplate as it is without any change if needed we will change it in future
 ```
 [root@watchsrv ~]# cat /etc/prometheus/prometheus.yml
 # my global config
@@ -229,7 +230,7 @@ scrape_configs:
 [root@watchsrv ~]#
 ```
 
-> Create a Prometheus systemd Service Unit File
+> - Create a Prometheus systemd Service Unit File
 
 ```
 [root@watchsrv ~]# vi /etc/systemd/system/prometheus.service
@@ -262,7 +263,7 @@ WantedBy=multi-user.target
 [root@watchsrv ~]#
 ```
 
-> Reload systemd Daemon & Start the Service
+> - Reload systemd Daemon & Start the Service
 ```
 [root@watchsrv ~]# systemctl daemon-reload
 [root@watchsrv ~]# systemctl status prometheus
@@ -294,7 +295,7 @@ Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 [root@watchsrv ~]#
 ```
-> Once the setup is complete, you can access the Prometheus UI by logging in to http:/<Server Name/Server IP>/:9090, as below.
+> - Once the setup is complete, you can access the Prometheus UI by logging in to http:/<Server Name/Server IP>/:9090, as below.
 <img src="imgs/prometheus-initial.png" alt="Grafana Initial User Interface"> 
 
 ### Installing & Configuring MySQL Prometheus Exporter
@@ -303,7 +304,7 @@ Prometheus requires an exporter for collecting MySQL server metrics. This export
 
 Follow the below steps to install and setup MySQL Prometheus Exporter on the central Prometheus host.
 
-> To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
+> - To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
 ```
 [root@watchsrv ~]# wget https://github.com/prometheus/mysqld_exporter/releases/download/v0.15.1/mysqld_exporter-0.15.1.linux-amd64.tar.gz
 --2023-12-23 18:33:37--  https://github.com/prometheus/mysqld_exporter/releases/download/v0.15.1/mysqld_exporter-0.15.1.linux-amd64.tar.gz
@@ -325,7 +326,7 @@ mysqld_exporter-0.1 100%[===================>]   7.90M  2.51MB/s    in 3.2s
 [root@watchsrv ~]#
 ```
 
-> Once its downloaded lets unzip it and move to /usr/local/bin
+> - Once its downloaded lets unzip it and move to /usr/local/bin
 
 ```
 [root@watchsrv ~]# tar -xvf mysqld_exporter-0.15.1.linux-amd64.tar.gz
@@ -340,7 +341,7 @@ mysqld_exporter-0.15.1.linux-amd64/NOTICE
 [root@watchsrv mysqld_exporter]#
 ```
 
-> Create the user in mysql dedicated for monitoring.
+> - Create the user in mysql dedicated for monitoring.
 
 ```
 [root@mysqlvm1 ~]# mysql -uroot -p
@@ -371,25 +372,32 @@ Bye
 [root@mysqlvm1 ~]#
 ```
 
+> - Once the user is created, lets configure the Database Credentials as we are monitoring 3 servers we need to create 3 seperate files.
+
 ```
 [root@watchsrv ~]# vi /etc/mysqldmymysqlvm1.cnf
+[root@watchsrv ~]#
 [root@watchsrv ~]# cp /etc/mysqldmymysqlvm1.cnf /etc/mysqldmymysqlvm2.cnf
 [root@watchsrv ~]# cp /etc/mysqldmymysqlvm1.cnf /etc/mysqldmymysqlvm3.cnf
 [root@watchsrv ~]# vi /etc/mysqldmymysqlvm2.cnf
-[root@watchsrv ~]# vi /etc/mysqldmymysqlvm3.cnf
+[root@watchsrv ~]# vi /etc/mysqldmymysqlvm3.
+[root@watchsrv ~]#
 [root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm1.cnf
 [root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm2.cnf
 [root@watchsrv ~]# chown root:prometheus /etc/mysqldmymysqlvm3.cnf
+[root@watchsrv ~]#
 [root@watchsrv ~]# cat /etc/mysqldmymysqlvm1.cnf
 [client]
 user=mysqldexp
 password=admin123
-host=mysqlvm1.localdomain
+host=mysqlvm1.
+[root@watchsrv ~]#
 [root@watchsrv ~]# cat /etc/mysqldmymysqlvm2.cnf
 [client]
 user=mysqldexp
 password=admin123
 host=mysqlvm2.localdomain
+[root@watchsrv ~]#
 [root@watchsrv ~]# cat /etc/mysqldmymysqlvm3.cnf
 [client]
 user=mysqldexp
@@ -398,12 +406,15 @@ host=mysqlvm3.localdomain
 [root@watchsrv ~]#
 ```
 
+> - Create systemd Unit File for each servers
 ```
 [root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm1.service
 [root@watchsrv ~]# cp /etc/systemd/system/mysqldmymysqlvm1.service /etc/systemd/system/mysqldmymysqlvm2.service
 [root@watchsrv ~]# cp /etc/systemd/system/mysqldmymysqlvm1.service /etc/systemd/system/mysqldmymysqlvm3.service
+[root@watchsrv ~]# 
 [root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm2.service
 [root@watchsrv ~]# vi /etc/systemd/system/mysqldmymysqlvm3.service
+[root@watchsrv ~]# 
 [root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm1.service
 [Unit]
 Description=Prometheus MySQL Exporter
@@ -436,6 +447,8 @@ ExecStart=/usr/local/bin/mysqld_exporter \
 
 [Install]
 WantedBy=multi-user.target
+[root@watchsrv ~]# 
+[root@watchsrv ~]# 
 [root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm2.service
 [Unit]
 Description=Prometheus MySQL Exporter
@@ -468,6 +481,8 @@ ExecStart=/usr/local/bin/mysqld_exporter \
 
 [Install]
 WantedBy=multi-user.target
+[root@watchsrv ~]# 
+[root@watchsrv ~]# 
 [root@watchsrv ~]# cat /etc/systemd/system/mysqldmymysqlvm3.service
 [Unit]
 Description=Prometheus MySQL Exporter
@@ -504,6 +519,8 @@ WantedBy=multi-user.target
 
 
 ```
+
+> - When done, reload systemd and start mysql_exporter service each
 
 ```
 [root@watchsrv ~]# systemctl daemon-reload
@@ -584,6 +601,7 @@ Dec 23 19:27:19 watchsrv.localdomain mysqld_exporter[5948]: ts=2023-12-23T13:42>
 [root@watchsrv ~]#
 ```
 
+> - Configure MySQL Endpoint to be Scraped by Prometheus and restart Prometheus
 ```
 [root@watchsrv ~]# vi /etc/prometheus/prometheus.yml
 [root@watchsrv ~]# cat /etc/prometheus/prometheus.yml
@@ -618,9 +636,6 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9106']
 [root@watchsrv ~]#
-```
-
-```
 [root@watchsrv ~]# systemctl stop prometheus
 [root@watchsrv ~]# systemctl start prometheus
 [root@watchsrv ~]# systemctl status prometheus
@@ -646,21 +661,25 @@ Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
 Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
 [root@watchsrv ~]#
 
-
 ```
 
-```
-[root@watchsrv ~]# wget https://github.com/percona/grafana-dashboards/blob/main/dashboards/MySQL/MySQL_Instances_Overview.json
---2023-12-23 19:56:43--  https://github.com/percona/grafana-dashboards/blob/main/dashboards/MySQL/MySQL_Instances_Overview.json
-Resolving github.com (github.com)... 20.205.243.166
-Connecting to github.com (github.com)|20.205.243.166|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 1100095 (1.0M) [text/plain]
-Saving to: ‘MySQL_Instances_Overview.json’
+<hr >
 
-MySQL_Instances_Ove 100%[===================>]   1.05M   170KB/s    in 7.8s
+### Adding a Data Source in Gafana
 
-2023-12-23 19:56:53 (137 KB/s) - ‘MySQL_Instances_Overview.json’ saved [1100095/1100095]
+> - To add a Data Source go to <strong> Home | Data Sources </strong> as in below:
+<img src="imgs/datasource-1.png" alt="Data Source 1"> 
 
-[root@watchsrv ~]#
-```
+> - Data Source tab opens then click on Add data source as below:
+<img src="imgs/datasource-2.png" alt="Grafana Initial Dashboard"> 
+
+> - Click on Prometheus as below:
+<img src="imgs/datasource-3.png" alt="Grafana Initial Dashboard"> 
+
+> - Provide name and connection details as below and click on <strong> Save & Test </strong> scrolling:
+<img src="imgs/datasource-4.png" alt="Grafana Initial Dashboard"> 
+
+Thats it data source addition to Grafana is completed.
+
+<img src="imgs/datasource-1.png" alt="Grafana Initial Dashboard"> 
+<img src="imgs/datasource-1.png" alt="Grafana Initial Dashboard"> 
