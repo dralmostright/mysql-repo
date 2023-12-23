@@ -1655,7 +1655,7 @@ Dba.getCluster: This function is not available through a session to a standalone
 
 And in this case you may need to reboot the whole cluster as below:
 
-````
+```
  MySQL  localhost:33060+ ssl  JS > dba.rebootClusterFromCompleteOutage('mysqlclus');
 Restoring the Cluster 'mysqlclus' from complete outage...
 
@@ -1733,6 +1733,7 @@ The Cluster was successfully rebooted.
 ```
 
 ### Some useful cmds:
+
 ```
 shell.connect("clusteradmin@mysqlvm1:3306");
 cluster = dba.getCluster();
