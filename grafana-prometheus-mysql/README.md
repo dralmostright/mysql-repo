@@ -102,6 +102,8 @@ Now lets test if its running. Grafana uses 3000 port so obtaining the server ip 
 When you provide default password it may request you to change the password, which you can or skip it but i have changed it in my case and the initial dashboard look like below:
 <img src="imgs/grafana-login.png" alt="Grafana Initial Dashboard"> 
 
+<hr >
+
 ### Install and configure Prometheus
 
 > - To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
@@ -297,6 +299,8 @@ Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
 ```
 > - Once the setup is complete, you can access the Prometheus UI by logging in to http:/<Server Name/Server IP>/:9090, as below.
 <img src="imgs/prometheus-initial.png" alt="Grafana Initial User Interface"> 
+
+<hr >
 
 ### Installing & Configuring MySQL Prometheus Exporter
 
@@ -687,4 +691,24 @@ Dec 23 20:44:50 watchsrv.localdomain prometheus[7474]: ts=2023-12-23T14:59:50.7>
 
 Thats it data source addition to Grafana is completed.
 
+<hr >
+
 ### Build MySQL Dashboard
+
+> - Login to Grafana and click on dashboards as below:
+<img src="imgs/dashboard-2.png" alt="Data Source 1"> 
+
+> - Click on Import Dashboard:
+<img src="imgs/dashboard-3.png" alt="Data Source 1"> 
+
+> - We will used the default one provided by Grafana. Hence go to Grafana site for [Mysql Overview Dashboard](https://grafana.com/grafana/dashboards/7362-mysql-overview/?tab=revisions) and click on Copy ID to Clipboard as i have already clicked so it's showing copied.
+<img src="imgs/dashboard-1.png" alt="Data Source 1"> 
+
+> - Paste the copied id as below:
+<img src="imgs/dashboard-4.png" alt="Data Source 1"> 
+
+> - Select Prometheus and click on import
+<img src="imgs/dashboard-5.png" alt="Data Source 1">
+
+> - Your Dashboard will load as below:
+<img src="imgs/dashboard-6.png" alt="Data Source 1">
