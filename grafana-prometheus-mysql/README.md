@@ -95,7 +95,7 @@ Dec 23 17:45:17 watchsrv.localdomain grafana[3489]: logger=plugins.update.check>
 [root@watchsrv ~]#
 ```
 
-Now lets test if its running. Grafana uses 3000 port so obtaining the server ip we will hith the url as below. And the Default login and password of Grafana are: <strong>admin/admin<strong>, default location Grafana will log into: /var/log/Grafana.
+Now lets test if its running. Grafana uses 3000 port so obtaining the server ip we will hith the url as below. And the Default login and password of Grafana are: <strong>admin/admin</strong>, default location Grafana will log into: /var/log/Grafana.
 <img src="imgs/grafana-initial.png" alt="Grafana Initial User Interface"> 
 
 When you provide default password it may request you to change the password, which you can or skip it but i have changed it in my case and the initial dashboard look like below:
@@ -104,4 +104,197 @@ When you provide default password it may request you to change the password, whi
 ### Install and configure Prometheus
 
 To configure Prometheus we will need to download the [Prometheus Binaries](https://prometheus.io/download/). We will be using Linux compatible binaries.
- 
+
+```
+[root@watchsrv ~]# wget https://github.com/prometheus/prometheus/releases/download/v2.45.2/prometheus-2.45.2.linux-amd64.tar.gz
+--2023-12-23 17:59:37--  https://github.com/prometheus/prometheus/releases/download/v2.45.2/prometheus-2.45.2.linux-amd64.tar.gz
+Resolving github.com (github.com)... 20.205.243.166
+Connecting to github.com (github.com)|20.205.243.166|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/6838921/6c7e9d0f-0deb-4961-b7b5-7b65f10dfa37?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20231223%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231223T121438Z&X-Amz-Expires=300&X-Amz-Signature=e440ccd24e594c05f5a913ddc24ebabd66561c6208c2f906b813505dc00bf02b&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=6838921&response-content-disposition=attachment%3B%20filename%3Dprometheus-2.45.2.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream [following]
+--2023-12-23 17:59:38--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/6838921/6c7e9d0f-0deb-4961-b7b5-7b65f10dfa37?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20231223%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231223T121438Z&X-Amz-Expires=300&X-Amz-Signature=e440ccd24e594c05f5a913ddc24ebabd66561c6208c2f906b813505dc00bf02b&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=6838921&response-content-disposition=attachment%3B%20filename%3Dprometheus-2.45.2.linux-amd64.tar.gz&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.111.133, ...
+Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 92582580 (88M) [application/octet-stream]
+Saving to: ‘prometheus-2.45.2.linux-amd64.tar.gz’
+
+prometheus-2.45.2.l 100%[===================>]  88.29M   206KB/s    in 2m 10s
+
+2023-12-23 18:01:50 (694 KB/s) - ‘prometheus-2.45.2.linux-amd64.tar.gz’ saved [92582580/92582580]
+
+[root@watchsrv ~]#
+```
+Lets unzip the binaries.
+```
+[root@watchsrv ~]# tar -xvf prometheus-2.45.2.linux-amd64.tar.gz
+prometheus-2.45.2.linux-amd64/
+prometheus-2.45.2.linux-amd64/NOTICE
+prometheus-2.45.2.linux-amd64/LICENSE
+prometheus-2.45.2.linux-amd64/prometheus
+prometheus-2.45.2.linux-amd64/consoles/
+prometheus-2.45.2.linux-amd64/consoles/prometheus-overview.html
+prometheus-2.45.2.linux-amd64/consoles/node-cpu.html
+prometheus-2.45.2.linux-amd64/consoles/node.html
+prometheus-2.45.2.linux-amd64/consoles/prometheus.html
+prometheus-2.45.2.linux-amd64/consoles/index.html.example
+prometheus-2.45.2.linux-amd64/consoles/node-overview.html
+prometheus-2.45.2.linux-amd64/consoles/node-disk.html
+prometheus-2.45.2.linux-amd64/prometheus.yml
+prometheus-2.45.2.linux-amd64/promtool
+prometheus-2.45.2.linux-amd64/console_libraries/
+prometheus-2.45.2.linux-amd64/console_libraries/menu.lib
+prometheus-2.45.2.linux-amd64/console_libraries/prom.lib
+[root@watchsrv ~]# ls -ltr | grep prome
+drwxr-xr-x  4 1001  127      132 Dec 19 20:19 prometheus-2.45.2.linux-amd64
+-rw-r--r--  1 root root 92582580 Dec 19 20:23 prometheus-2.45.2.linux-amd64.tar.gz
+[root@watchsrv ~]#
+```
+
+1. Create a Prometheus System Group & User and directories
+```
+[root@watchsrv ~]# groupadd --system prometheus
+[root@watchsrv ~]# useradd -s /sbin/nologin --system -g prometheus prometheus
+[root@watchsrv ~]#
+[root@watchsrv ~]# mkdir -pv /var/lib/prometheus
+mkdir: created directory '/var/lib/prometheus'
+[root@watchsrv ~]# mkdir -pv /etc/prometheus
+mkdir: created directory '/etc/prometheus'
+[root@watchsrv ~]# chown -R prometheus:prometheus /etc/prometheus
+[root@watchsrv ~]# chown -R prometheus:prometheus /var/lib/prometheus
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv prometheus-2.45.2.linux-amd64]# pwd
+/root/prometheus-2.45.2.linux-amd64
+[root@watchsrv prometheus-2.45.2.linux-amd64]#
+[root@watchsrv prometheus-2.45.2.linux-amd64]# ls
+console_libraries  LICENSE  prometheus      promtool
+consoles           NOTICE   prometheus.yml
+[root@watchsrv prometheus-2.45.2.linux-amd64]# mv prometheus promtool /usr/local/bin/
+[root@watchsrv prometheus-2.45.2.linux-amd64]# chown prometheus:prometheus /usr/local/bin/prometheu^C
+[root@watchsrv prometheus-2.45.2.linux-amd64]# cd
+[root@watchsrv ~]# chown prometheus:prometheus /usr/local/bin/prometheus
+[root@watchsrv ~]# chown prometheus:prometheus /usr/local/bin/promtool
+```
+
+```
+[root@watchsrv ~]# cp -r prometheus-2.45.2.linux-amd64/consoles /etc/prometheus
+[root@watchsrv ~]# cp -r prometheus-2.45.2.linux-amd64/console_libraries /etc/prometheus
+[root@watchsrv ~]# chown -R prometheus:prometheus /etc/prometheus/consoles
+[root@watchsrv ~]# chown -R prometheus:prometheus /etc/prometheus/console_libraries
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# cp prometheus-2.45.2.linux-amd64/prometheus.yml /etc/prometheus/prometheus.yml
+[root@watchsrv ~]# chown prometheus:prometheus /etc/prometheus/prometheus.yml
+[root@watchsrv ~]#
+```
+
+We will be using the temaplate as it is without any change if needed we will change it in future
+```
+[root@watchsrv ~]# cat /etc/prometheus/prometheus.yml
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ["localhost:9090"]
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# vi /etc/systemd/system/prometheus.service
+[root@watchsrv ~]# cat /etc/systemd/system/prometheus.service
+[Unit]
+Description=Prometheus
+Documentation=https://prometheus.io/docs/introduction/overview/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Environment="GOMAXPROCS=1"
+User=prometheus
+Group=prometheus
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/prometheus \
+  --config.file=/etc/prometheus/prometheus.yml \
+  --storage.tsdb.path=/var/lib/prometheus \
+  --web.console.templates=/etc/prometheus/consoles \
+  --web.console.libraries=/etc/prometheus/console_libraries \
+  --web.listen-address=0.0.0.0:9090 \
+  --web.external-url=
+
+SyslogIdentifier=prometheus
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+[root@watchsrv ~]#
+```
+
+```
+[root@watchsrv ~]# systemctl daemon-reload
+[root@watchsrv ~]# systemctl status prometheus
+● prometheus.service - Prometheus
+   Loaded: loaded (/etc/systemd/system/prometheus.service; disabled; vendor pre>
+   Active: inactive (dead)
+     Docs: https://prometheus.io/docs/introduction/overview/
+[root@watchsrv ~]# systemctl start prometheus
+[root@watchsrv ~]# systemctl status prometheus
+● prometheus.service - Prometheus
+   Loaded: loaded (/etc/systemd/system/prometheus.service; disabled; vendor pre>
+   Active: active (running) since Sat 2023-12-23 18:26:28 +0545; 6s ago
+     Docs: https://prometheus.io/docs/introduction/overview/
+ Main PID: 4661 (prometheus)
+    Tasks: 6 (limit: 22960)
+   Memory: 15.6M
+   CGroup: /system.slice/prometheus.service
+           └─4661 /usr/local/bin/prometheus --config.file=/etc/prometheus/prome>
+
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.2>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
+Dec 23 18:26:28 watchsrv.localdomain prometheus[4661]: ts=2023-12-23T12:41:28.4>
+[root@watchsrv ~]#
+```
+
+<img src="imgs/prometheus-initial.png" alt="Grafana Initial User Interface"> 
+
+### Installing & Configuring MySQL Prometheus Exporter
+
+Prometheus requires an exporter for collecting MySQL server metrics. This exporter can be run centrally on the Prometheus server or locally on the MySQL database server. For further reading, refer to this [Prometheus documentation](https://prometheus.io/docs/instrumenting/writing_exporters/#deployment).
+
+Follow the below steps to install and setup MySQL Prometheus Exporter on the central Prometheus host.
