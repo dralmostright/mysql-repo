@@ -1377,6 +1377,7 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
  MySQL  localhost:33060+ ssl  JS >
 ```
 ### Verify the cluster 
+MySQL shell API provides lots of flexibility to manage and view the InnoDB Cluster. We dba package comes with lots of functions which we can use to manage and view cluster status. The below command queries the current status of the InnoDB cluster and produces a report. The status field for each instance should show either ONLINE or RECOVERING. RECOVERING means that the instance is receiving updates from the seed instance and should eventually switch to ONLINE.
 ```
  MySQL  localhost:33060+ ssl  JS > cluster = dba.getCluster();
 <Cluster:mysqlclus>
@@ -1456,4 +1457,151 @@ The instance 'mysqlvm3.localdomain:3306' was successfully added to the cluster.
 }
  MySQL  localhost:33060+ ssl  JS >
 ```
-https://dev.mysql.com/blog-archive/mysql-innodb-cluster-8-0-a-hands-on-tutorial/
+<hr >
+
+### Deploy MySQL Router
+In order for applications to handle failover, they need to be aware of the topology of the InnoDB cluster. They also need to know, at any time, which of the instances is the PRIMARY. While it’s possible for applications to implement that logic by themselves, MySQL Router can do that for you, with minimal work and no code changes in applications.
+
+When a failover occurs, the client application must be aware of the PRIMARY instance and cluster topology. This functionality is handled by the MySQL Router. It routes that redirects the data requests to the available MySQL Server instance. MySQL Router acts as a proxy that is used to hide the multiple MySQL database servers. The concept of the MySQL Router is similar to the Virtual network
+
+The recommended deployment of MySQL Router is on the same host as the application. During bootstrap, MySQL Router needs to connect to the cluster and have privileges to query the performance_schema, mysql_innodb_cluster_metadata and create a restricted, read-only account to be used by itself during normal operation.
+
+The prerequisite for MySQL router is we need to install the package, which we have already done in previous section. Now lets implement it.
+
+Lets create the directory to hold mysqlrouter config. And the ownership should be mysqlrouter for simplicity and seggregation.
+```
+[root@mysqlvm1 pgdata]# pwd
+/pgdata
+[root@mysqlvm1 pgdata]# ls -ltr | grep mysqlrou
+drwxr-xr-x 2 mysqlrouter mysqlrouter  6 Dec 17 18:27 mysqlrouter
+[root@mysqlvm1 pgdata]#
+```
+
+Now lets bootstrap mysqlrouter with the metadata, which can be done by calling mysqlrouter with the following command line option from the system’s shell:
+```
+[root@mysqlvm1 pgdata]# mysqlrouter --bootstrap clusteradmin@mysqlvm1:3306 -d /pgdata/mysqlrouter --user=mysqlrouter
+Please enter MySQL password for clusteradmin:
+# Bootstrapping MySQL Router 8.0.35 (MySQL Community - GPL) instance at '/pgdata/mysqlrouter'...
+
+- Creating account(s) (only those that are needed, if any)
+- Verifying account (using it to run SQL queries that would be run by Router)
+- Storing account in keyring
+- Adjusting permissions of generated files
+- Creating configuration /pgdata/mysqlrouter/mysqlrouter.conf
+
+# MySQL Router configured for the InnoDB Cluster 'mysqlclus'
+
+After this MySQL Router has been started with the generated configuration
+
+    $ mysqlrouter -c /pgdata/mysqlrouter/mysqlrouter.conf
+
+InnoDB Cluster 'mysqlclus' can be reached by connecting to:
+
+## MySQL Classic protocol
+
+- Read/Write Connections: localhost:6446
+- Read/Only Connections:  localhost:6447
+
+## MySQL X protocol
+
+- Read/Write Connections: localhost:6448
+- Read/Only Connections:  localhost:6449
+
+[root@mysqlvm1 pgdata]#
+```
+
+We can below configuration will be created once the bootstrap is done:
+```
+[root@mysqlvm1 mysqlrouter]# ls -ltr
+total 16
+drwx------ 2 mysqlrouter mysqlrouter    6 Dec 23 11:37 run
+-rw------- 1 mysqlrouter mysqlrouter   90 Dec 23 11:37 mysqlrouter.key
+-rwx------ 1 mysqlrouter mysqlrouter  167 Dec 23 11:37 stop.sh
+-rwx------ 1 mysqlrouter mysqlrouter  301 Dec 23 11:37 start.sh
+-rw------- 1 mysqlrouter mysqlrouter 1950 Dec 23 11:37 mysqlrouter.conf
+drwx------ 2 mysqlrouter mysqlrouter   29 Dec 23 11:37 log
+drwx------ 2 mysqlrouter mysqlrouter  116 Dec 23 11:37 data
+[root@mysqlvm1 mysqlrouter]#
+```
+
+Lets start the mysqlrouter service if not already started, using below command in shell.
+```
+[root@mysqlvm1 mysqlrouter]# ./start.sh
+[root@mysqlvm1 mysqlrouter]# PID 2733 written to '/pgdata/mysqlrouter/mysqlrouter.pid'
+stopping to log to the console. Continuing to log to filelog
+
+[root@mysqlvm1 mysqlrouter]#
+```
+```
+[root@mysqlvm1 mysqlrouter]# tail -f log/mysqlrouter.log
+2023-12-23 11:45:26 routing INFO [7f5a197fa700] [routing:bootstrap_x_ro] started: routing strategy = round-robin-with-fallback
+2023-12-23 11:45:26 routing INFO [7f5a197fa700] Start accepting connections for routing routing:bootstrap_x_ro listening on '0.0.0.0:6449'
+2023-12-23 11:45:26 routing INFO [7f5a18ff9700] [routing:bootstrap_x_rw] started: routing strategy = first-available
+2023-12-23 11:45:26 routing INFO [7f5a18ff9700] Start accepting connections for routing routing:bootstrap_x_rw listening on '0.0.0.0:6448'
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700] Connected with metadata server running on mysqlvm1.localdomain:3306
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700] Potential changes detected in cluster after metadata refresh (view_id=0)
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700] Metadata for cluster 'mysqlclus' has 3 member(s), single-primary:
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700]     mysqlvm1.localdomain:3306 / 33060 - mode=RW
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700]     mysqlvm2.localdomain:3306 / 33060 - mode=RO
+2023-12-23 11:45:26 metadata_cache INFO [7f5a58475700]     mysqlvm3.localdomain:3306 / 33060 - mode=RO
+```
+
+Now letss careate user to test:
+```
+[root@mysqlvm1 mysqlrouter]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 971
+Server version: 8.0.35 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE USER 'testusr'@'%' identified by 'admin123';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> GRANT ALL privileges on *.* to 'testusr'@'%' with grant option;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+```
+
+Finally lets verify the connection, all the R/W connection will be routed to Primary instance and all R/O will be routed to Secondary instance when used respective ports.
+```
+[root@mysqlvm1 mysqlrouter]# mysql -utestusr -p -hmysqlvm1 -P6446 -e 'select user(), @@hostname, @@read_only, @@super_read_only'
+Enter password:
++------------------------------+----------------------+-------------+-------------------+
+| user()                       | @@hostname           | @@read_only | @@super_read_only |
++------------------------------+----------------------+-------------+-------------------+
+| testusr@mysqlvm1.localdomain | mysqlvm1.localdomain |           0 |                 0 |
++------------------------------+----------------------+-------------+-------------------+
+[root@mysqlvm1 mysqlrouter]#
+
+
+[root@mysqlvm1 mysqlrouter]# mysql -utestusr -p -hmysqlvm1 -P6447 -e 'select user(), @@hostname, @@read_only, @@super_read_only'
+Enter password:
++------------------------------+----------------------+-------------+-------------------+
+| user()                       | @@hostname           | @@read_only | @@super_read_only |
++------------------------------+----------------------+-------------+-------------------+
+| testusr@mysqlvm1.localdomain | mysqlvm3.localdomain |           1 |                 1 |
++------------------------------+----------------------+-------------+-------------------+
+[root@mysqlvm1 mysqlrouter]#
+
+
+[root@mysqlvm1 mysqlrouter]# mysql -utestusr -p -hmysqlvm1 -P6447 -e 'select user(), @@hostname, @@read_only, @@super_read_only'
+Enter password:
++------------------------------+----------------------+-------------+-------------------+
+| user()                       | @@hostname           | @@read_only | @@super_read_only |
++------------------------------+----------------------+-------------+-------------------+
+| testusr@mysqlvm1.localdomain | mysqlvm2.localdomain |           1 |                 1 |
++------------------------------+----------------------+-------------+-------------------+
+[root@mysqlvm1 mysqlrouter]#
+```
